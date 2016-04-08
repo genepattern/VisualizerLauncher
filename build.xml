@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Ant build file -->
+
+<project basedir="" default="package" name="VisualizerLauncher">
+
+    <target name="package" depends="clean, compile">
+        <jar basedir="${build.dir}" defaultexcludes="true" excludes="**/*.java" includes="${inclds}"
+             jarfile="${appfile}" >
+            <zipgroupfileset refid="jar.lib"/>
+            <manifest>
+                <attribute name="Main-Class" value="org.genepattern.desktop.VisualizerLauncher"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="clean">
+        <delete failonerror="false">
+            <fileset dir="src/build" includes="**/*.class"/>
+        </delete>
+    </target>
+
+    <target name="init">
+        <property name="appfile" value="visualizerLauncher.jar"/>
+        <property name="inclds" value="org/"/>
+        <property name="build.dir" value="build"/>
+
+        <path id="library.classpath">
+            <fileset id="jar.lib" dir="lib"/>
+        </path>
+        <mkdir dir="${build.dir}"/>
+    </target>
+
+    <target name="compile" depends="init">
+        <javac debug="true" defaultexcludes="true" deprecation="true"
+               destdir="${build.dir}" includes="${inclds}" optimize="false" proceed="false"
+               srcdir="src">
+            <classpath refid="library.classpath"/>
+        </javac>
+    </target>
+</project>
