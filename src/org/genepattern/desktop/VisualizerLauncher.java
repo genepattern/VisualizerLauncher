@@ -8,6 +8,7 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,6 +20,8 @@ import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.*;
 import org.apache.http.util.EntityUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -29,13 +32,18 @@ import org.json.JSONTokener;
  */
 public class VisualizerLauncher
 {
+    final static private Logger log = LogManager.getLogger(VisualizerLauncher.class);
+
+    final File downloadLocation = new File("visualizerLauncherDir");
     private static String REST_API_JOB_PATH  = "/rest/v1/jobs";
     private static String REST_API_TASK_PATH = "/rest/v1/tasks";
 
+    private JFrame frame;
     private JTextField serverField;
     private JTextField usernameField;
     private JPasswordField passwordField;
     private JTextField jobNumberField;
+    private JLabel statusMsgField;
 
     private String gpServer;
     private JobInfo jobInfo;
@@ -45,6 +53,8 @@ public class VisualizerLauncher
     {
         this.jobInfo = new JobInfo();
         jobInfo.setJobNumber(jobNumber);
+
+        addShutDownHook();
     }
 
     protected Thread copyStream(final InputStream is, final PrintStream out) {
@@ -109,7 +119,8 @@ public class VisualizerLauncher
 
                 if(serverName == null || serverName.length() == 0)
                 {
-                    displayErrorMsg("Please enter a server");
+                    displayMsg("Please enter a server", true);
+                    statusMsgField.setText("");
                     return;
                 }
 
@@ -125,34 +136,56 @@ public class VisualizerLauncher
                 }
                 else
                 {
-                    displayErrorMsg("Please enter a username");
+                    displayMsg("Please enter a username", true);
+                    statusMsgField.setText("");
                     return;
                 }
 
                 if(jobNumber == null || jobNumber.length() == 0)
                 {
-                    displayErrorMsg("Please enter a job number");
+                    displayMsg("Please enter a job number", true);
+                    statusMsgField.setText("");
                     return;
+                }
+                else
+                {
+                    try
+                    {
+                        Integer.parseInt(jobNumber);
+                    }
+                    catch(NumberFormatException ne)
+                    {
+                        displayMsg("Job number must be an integer", true);
+                        statusMsgField.setText("");
+                        return;
+                    }
                 }
 
                 jobInfo = new JobInfo();
                 jobInfo.setJobNumber(jobNumber);
                 gpServer = serverName;
-                JDialog dialog = showProgress();
                 exec();
-                dialog.dispose();
             }
         });
 
         JPanel submitPanel = new JPanel();
+        submitPanel.setLayout(new BoxLayout(submitPanel, BoxLayout.Y_AXIS));
+        submit.setAlignmentX(Component.CENTER_ALIGNMENT);
         submitPanel.add(submit);
 
-        JFrame frame = new JFrame("GenePattern Java Visualizer Launcher");
+        frame = new JFrame("GenePattern Java Visualizer Launcher");
         frame.setLayout(new BorderLayout());
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.setPreferredSize(new Dimension(520, 250));
+        frame.setPreferredSize(new Dimension(520, 270));
         frame.add(panel, BorderLayout.CENTER);
         frame.add(submitPanel, BorderLayout.SOUTH);
+
+        JPanel statusMsgFieldPanel = new JPanel();
+        statusMsgFieldPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        statusMsgFieldPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        statusMsgField = new JLabel();
+        statusMsgFieldPanel.add(statusMsgField);
+        submitPanel.add(statusMsgFieldPanel);
         frame.pack();
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -165,24 +198,6 @@ public class VisualizerLauncher
         login();
     }
 
-    private JDialog showProgress() {
-        JDialog dialog = new JDialog();
-        JLabel label = new JLabel("Launching visualizer...");
-        JProgressBar progressBar = new JProgressBar();
-        dialog.setTitle("GenePattern");
-        progressBar.setIndeterminate(true);
-        label.setFont(new Font("Dialog", Font.BOLD, 14));
-        label.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        dialog.getContentPane().add(label);
-        dialog.getContentPane().add(progressBar, BorderLayout.SOUTH);
-        dialog.setResizable(false);
-        dialog.pack();
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        dialog.setLocation((screenSize.width - dialog.getWidth()) / 2, (screenSize.height - dialog.getHeight()) / 2);
-        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-        dialog.setVisible(true);
-        return dialog;
-    }
 
     private void downloadSupportFiles(GPTask task)
     {
@@ -195,7 +210,7 @@ public class VisualizerLauncher
                 int slashIndex = supportFileURL.lastIndexOf('=');
                 String filenameWithExtension =  supportFileURL.substring(slashIndex + 1);
 
-                Util.downloadFile(new URL(supportFileURL), new File("."), filenameWithExtension, basicAuthString);
+                Util.downloadFile(new URL(supportFileURL), downloadLocation, filenameWithExtension, basicAuthString);
             }
         }
         catch(MalformedURLException m)
@@ -217,7 +232,7 @@ public class VisualizerLauncher
             HttpGet httpget = new HttpGet(URL);
             httpget.setHeader("Authorization", basicAuthString);
 
-            System.out.println("Executing request " + httpget.getRequestLine());
+            log.info("Executing request " + httpget.getRequestLine());
 
             // Create a custom response handler
             ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
@@ -236,8 +251,8 @@ public class VisualizerLauncher
 
             };
             responseBody = httpClient.execute(httpget, responseHandler);
-            System.out.println("----------------------------------------");
-            System.out.println(responseBody);
+            log.info("----------------------------------------");
+            log.info(responseBody);
 
         } finally {
             httpClient.close();
@@ -370,6 +385,11 @@ public class VisualizerLauncher
             throw new Exception("No command line found for task with LSID: " + jobInfo.getGpTask().getLsid());
         }
 
+        if(!root.has("supportFiles"))
+        {
+            throw new Exception("No supportFiles property found. Please check if this is GenePattern version 3.9.8 or greater.");
+        }
+
         JSONArray supportFileURIs = root.getJSONArray("supportFiles");
 
         if(supportFileURIs == null || supportFileURIs.length() == 0)
@@ -402,13 +422,13 @@ public class VisualizerLauncher
 
         //substitute <libdir> on the commandline with empty string since
         //all support files are in the current directory
-        cmdLine = cmdLine.replace("<libdir>", new File("").getAbsolutePath() + "/");
+        cmdLine = cmdLine.replace("<libdir>", downloadLocation.getAbsolutePath() + "/");
 
         //substitute the <java> on the command
         String java = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
         //add .exe extension if this is Windows
         java += (System.getProperty("os.name").startsWith("Windows") ? ".exe" : "");
-        cmdLine = cmdLine.replace("<java>", java);
+        cmdLine = cmdLine.replace("<java>", "\"" + java + "\"");
 
         //get the substituted commandline from the serverField
         //String getTaskRESTCall = gpServer + REST_API_TASK_PATH  + "/" + jobInfo.getGpTask().getLsid() + "/substitute?commandline=" + encodeURIcomponent(cmdLine);
@@ -420,7 +440,7 @@ public class VisualizerLauncher
         JSONObject root = new JSONObject(tokener);
 
         JSONArray cmdLineArr = root.getJSONArray("commandline");
-        System.out.println("commandline: " + cmdLineArr);
+        log.info("commandline: " + cmdLineArr);
 
         Map<String, String> inputURLMap = jobInfo.getInputURLToFilePathMap();
         String[] cmdLineList = new String[cmdLineArr.length()];
@@ -429,29 +449,27 @@ public class VisualizerLauncher
             String argValue = cmdLineArr.getString(i);
             if(inputURLMap.containsKey(argValue))
             {
-                argValue = inputURLMap.get(argValue);
+                argValue = downloadLocation.getAbsolutePath() + "/" + inputURLMap.get(argValue);
             }
 
             cmdLineList[i] = argValue;
         }
 
-        /*for(final Map.Entry<String, String> entry : jobInfo.getInputURLToFilePathMap().entrySet())
-        {
-            commandLine = commandLine.replace(entry.getKey(), new File("").getAbsolutePath() + "/" + entry.getValue());
-        }*/
-
-        //JOptionPane.showMessageDialog(panel, "An error occurred while downloading the module support files: "+e.getLocalizedMessage());
+        log.info("running command " + Arrays.asList(cmdLineList));
 
         jobInfo.setCommandLine(cmdLineList);
 
         try {
             runCommand(jobInfo.getCommandLine());
+            statusMsgField.setText("");
         }
         catch (IOException e) {
             e.printStackTrace();
 
-            displayErrorMsg("An error occurred while running the visualizer: "
-                    +e.getLocalizedMessage());
+            String msg = "An error occurred while running the visualizer: "
+                    + e.getLocalizedMessage();
+            log.error(msg);
+            displayMsg(msg, true);
             return;
         }
     }
@@ -484,7 +502,7 @@ public class VisualizerLauncher
 
             URL fileURL = new URL(inputFileURL);
             inputURLToFilePathMap.put(fileURL.toString(), filenameWithExtension);
-            Util.downloadFile(fileURL, new File("."), filenameWithExtension, basicAuthString);
+            Util.downloadFile(fileURL, downloadLocation, filenameWithExtension, basicAuthString);
         }
 
         jobInfo.setInputURLToFilePathMap(inputURLToFilePathMap);
@@ -495,27 +513,35 @@ public class VisualizerLauncher
         try
         {
             //retrieve the job details in order to get the task details
+            statusMsgField.setText("Retrieving job details...");
             retrievejobDetails();
 
             //retrieve the visualizer module details
+            statusMsgField.setText("Retrieving task details...");
             retrieveTaskDetails();
 
             //download the support files
+            statusMsgField.setText("Downloading support files...");
             downloadSupportFiles(jobInfo.getGpTask());
 
             //download the input files
+            statusMsgField.setText("Downloading input files...");
             downloadInputFiles();
 
             //run the visualizer
+            statusMsgField.setText("Launching visualizer...");
             runVisualizer();
         }
         catch(Exception e)
         {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(null, "An error occurred while running the visualizer: " + e.getLocalizedMessage());
+            String msg = "An error occurred while running the visualizer: "
+                    + e.getLocalizedMessage();
+            log.error(msg);
+            statusMsgField.setText("");
+            displayMsg(msg, true);
         }
     }
-
 
     public void runCommand(final String[] command) throws IOException
     {
@@ -527,7 +553,6 @@ public class VisualizerLauncher
                     ProcessBuilder probuilder = new ProcessBuilder(command);
                     //You can set up your work directory
                     //probuilder.directory(new File(currentdirectory.getAbsolutePath()));
-                    //probuilder.directory(new File("c:\\xyzwsdemo"));
 
                     process = probuilder.start();
                 }
@@ -535,8 +560,9 @@ public class VisualizerLauncher
                     e1.printStackTrace();
 
                     String msg = "An error occurred while running the visualizer: " + e1.getLocalizedMessage();
-
-                    displayErrorMsg(msg);
+                    log.error(msg);
+                    statusMsgField.setText("");
+                    displayMsg(msg, true);
 
                     return;
                 }
@@ -553,7 +579,8 @@ public class VisualizerLauncher
                 //Wait to get exit value
                 try {
                     int exitValue = process.waitFor();
-                    System.out.println("\n\nExit Value is " + exitValue);
+                    System.exit(exitValue);
+                    //frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
                 } catch (InterruptedException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
@@ -563,45 +590,40 @@ public class VisualizerLauncher
         t.start();
     }
 
-    private void displayErrorMsg(String msg) {
+    private void displayMsg(String msg, boolean isError) {
         JTextArea jta = new JTextArea(msg);
         JScrollPane scrollPane = new JScrollPane(jta){
             @Override
             public Dimension getPreferredSize() {
-                return new Dimension(450, 300);
+                return new Dimension(410, 290);
             }
         };
 
+        String type = "INFO";
+        if(isError)
+        {
+            type = "ERROR: ";
+        }
         JOptionPane.showMessageDialog(
-                null, scrollPane, "Error", JOptionPane.ERROR_MESSAGE);
+                null, scrollPane, type, JOptionPane.ERROR_MESSAGE);
     }
 
-    /*public void runCommand(final String commandLine) throws IOException
-    {
-        Thread t = new Thread() {
+    public void addShutDownHook() {
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
             public void run() {
-                Process p = null;
-                try {
-                    
-                    p = Runtime.getRuntime().exec(commandLine);
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                    JOptionPane.showMessageDialog(null, "An error occurred while running the visualizer: " + e1.getLocalizedMessage());
-                    return;
-                }
-                // drain the output and error streams
-                copyStream(p.getInputStream(), System.out);
-                copyStream(p.getErrorStream(), System.err);
-
-                try {
-                    p.waitFor();
-                } catch (InterruptedException e) {
-
+                String[] entries = downloadLocation.list();
+                if(entries != null)
+                {
+                    for(String s: entries){
+                        File currentFile = new File(downloadLocation.getPath(),s);
+                       // currentFile.delete();
+                    }
+                    //downloadLocation.delete();
                 }
             }
-        };
-        t.start();
-    }*/
+        });
+    }
 
     public static void main(String[] args)
     {
