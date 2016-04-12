@@ -534,7 +534,7 @@ public class VisualizerLauncher
         }
         catch(Exception e)
         {
-            e.printStackTrace();
+            log.error(e);
             String msg = "An error occurred while running the visualizer: "
                     + e.getLocalizedMessage();
             log.error(msg);

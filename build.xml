@@ -13,7 +13,7 @@
         <jar basedir="${build.dir}" defaultexcludes="true" excludes="**/*.java" includes="${inclds}"
              jarfile="${appfile}">
             <fileset refid="jar.lib"/>
-            <fileset dir="." file="log4j2.properties"/>
+            <fileset dir="." file="log4j2.xml"/>
             <manifest>
                 <attribute name="Main-Class" value="org.genepattern.desktop.VisualizerLauncher"/>
                 <attribute name="Class-Path" value="${jar.classpath}"/>
@@ -23,7 +23,7 @@
 
     <target name="clean">
         <delete failonerror="false">
-            <fileset dir="src/build" includes="**/*.class"/>
+            <fileset dir="build" includes="**/*.class"/>
         </delete>
     </target>
 
@@ -34,6 +34,7 @@
 
         <path id="library.classpath">
             <fileset id="jar.lib" dir="lib"/>
+            <fileset file="log4j2.xml"/>
         </path>
         <mkdir dir="${build.dir}"/>
     </target>
