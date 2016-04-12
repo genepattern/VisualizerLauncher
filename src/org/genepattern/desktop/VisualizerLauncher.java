@@ -431,8 +431,7 @@ public class VisualizerLauncher
         cmdLine = cmdLine.replace("<java>", "\"" + java + "\"");
 
         //get the substituted commandline from the serverField
-        //String getTaskRESTCall = gpServer + REST_API_TASK_PATH  + "/" + jobInfo.getGpTask().getLsid() + "/substitute?commandline=" + encodeURIcomponent(cmdLine);
-        String getTaskRESTCall = gpServer + REST_API_JOB_PATH  + "/" + jobInfo.getJobNumber() + "/cmdLine?commandline=" + encodeURIcomponent(cmdLine);
+        String getTaskRESTCall = gpServer + REST_API_JOB_PATH  + "/" + jobInfo.getJobNumber() + "/visualizerCmdLine?commandline=" + encodeURIcomponent(cmdLine);
 
         String response = doGetRequest(getTaskRESTCall);
 
@@ -483,7 +482,7 @@ public class VisualizerLauncher
         }
 
         //get the URLs to the input files for the job
-        String getJobInputFilesRESTCall = gpServer + REST_API_JOB_PATH  + "/" + jobInfo.getJobNumber() + "/inputfiles";
+        String getJobInputFilesRESTCall = gpServer + REST_API_JOB_PATH  + "/" + jobInfo.getJobNumber() + "/visualizerInputFiles";
 
         String response = doGetRequest(getJobInputFilesRESTCall);
 
