@@ -14,7 +14,7 @@
                 <Route>
                     <RollingFile name="Rolling-${ctx:logFileName}"
                                  fileName="${ctx:logFileDir}/logs/${ctx:logFileName}"
-                                 filePattern="${ctx:logFileDir}/logs/${ctx:logFileName}.%i.log.gz">
+                                 filePattern="${ctx:logFileDir}/logs/${ctx:logFileName}.%i.log">
                         <PatternLayout pattern="%d{ABSOLUTE} %level{length=5} [%thread] %logger{1} - %msg%n"/>
                         <SizeBasedTriggeringPolicy size="1024" />
                     </RollingFile>

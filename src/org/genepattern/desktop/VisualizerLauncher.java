@@ -22,6 +22,7 @@ import org.apache.http.impl.client.*;
 import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -34,7 +35,7 @@ public class VisualizerLauncher
 {
     final static private Logger log = LogManager.getLogger(VisualizerLauncher.class);
 
-    final File downloadLocation = new File("visualizerLauncherDir");
+    private File downloadLocation;
     private static String REST_API_JOB_PATH  = "/rest/v1/jobs";
     private static String REST_API_TASK_PATH = "/rest/v1/tasks";
 
@@ -49,10 +50,9 @@ public class VisualizerLauncher
     private JobInfo jobInfo;
     private String basicAuthString;
 
-    VisualizerLauncher(String jobNumber)
+    VisualizerLauncher()
     {
         this.jobInfo = new JobInfo();
-        jobInfo.setJobNumber(jobNumber);
 
         addShutDownHook();
     }
@@ -163,7 +163,18 @@ public class VisualizerLauncher
 
                 jobInfo = new JobInfo();
                 jobInfo.setJobNumber(jobNumber);
+
+                String outputDir = "GenePattern_" + jobNumber;
+
+                ThreadContext.remove("logFileDir");
+                ThreadContext.remove("logFileName");
+
+                ThreadContext.put("logFileDir", outputDir);
+                ThreadContext.put("logFileName", "output");
+
                 gpServer = serverName;
+
+                downloadLocation = new File(outputDir);
                 exec();
             }
         });
@@ -626,8 +637,7 @@ public class VisualizerLauncher
 
     public static void main(String[] args)
     {
-        String jobNumber = "";
-        VisualizerLauncher dsLauncher = new VisualizerLauncher(jobNumber);
+        VisualizerLauncher dsLauncher = new VisualizerLauncher();
         dsLauncher.run();
     }
 }
