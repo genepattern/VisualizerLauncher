@@ -164,17 +164,18 @@ public class VisualizerLauncher
                 jobInfo = new JobInfo();
                 jobInfo.setJobNumber(jobNumber);
 
+                String topLevelOuput = "visualizerLauncher";
                 String outputDir = "GenePattern_" + jobNumber;
-
-                ThreadContext.remove("logFileDir");
-                ThreadContext.remove("logFileName");
-
-                ThreadContext.put("logFileDir", outputDir);
-                ThreadContext.put("logFileName", "output");
 
                 gpServer = serverName;
 
-                downloadLocation = new File(outputDir);
+                downloadLocation = new File(topLevelOuput, outputDir);
+
+                //setup location of log files
+                String vizDirName = "visualizerLauncher";
+                ThreadContext.put("logFileDir", vizDirName);
+                ThreadContext.put("logFileName", "output");
+
                 exec();
             }
         });
