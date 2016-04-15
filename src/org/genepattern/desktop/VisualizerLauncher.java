@@ -397,6 +397,18 @@ public class VisualizerLauncher
             throw new Exception("No command line found for task with LSID: " + jobInfo.getGpTask().getLsid());
         }
 
+        //check if this is a java visualizer
+        if(!root.has("taskType"))
+        {
+            throw new Exception("No taskType property found. The taskType must be set to Visualizer");
+        }
+
+        String taskType = root.getString("taskType");
+        if(!taskType.toLowerCase().equals("visualizer"))
+        {
+            throw new Exception("Unexpected taskType: " + taskType + ". Expecting the taskType to be \'Visualizer\'.");
+        }
+
         if(!root.has("supportFiles"))
         {
             throw new Exception("No supportFiles property found. Please check if this is GenePattern version 3.9.8 or greater.");
