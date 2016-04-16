@@ -297,67 +297,6 @@ public class VisualizerLauncher
         jobInfo.setGpTask(gpTask);
     }
 
-    /*private void retrievejobDetails() throws ClientProtocolException, IOException, JSONException, Exception
-    {
-        CredentialsProvider credsProvider = new BasicCredentialsProvider();
-        credsProvider.setCredentials(
-                new AuthScope(null, -1),
-                new UsernamePasswordCredentials("username", null));
-        CloseableHttpClient httpClient = HttpClientBuilder.create().build();
-        //HttpClients.custom()
-         //       .setDefaultCredentialsProvider(credsProvider)
-         //       .build();
-
-        try {
-            if(jobInfo == null || jobInfo.getJobNumber() == null)
-            {
-                throw new IllegalArgumentException("No valid job found");
-            }
-            String getJobAPICall = gpServer + DesktopLauncher.REST_API_JOB_PATH + "/" + jobInfo.getJobNumber();
-            HttpGet httpget = new HttpGet(getJobAPICall);
-            httpget.setHeader("Authorization", basicAuthString);
-
-            System.out.println("Executing request " + httpget.getRequestLine());
-
-            // Create a custom response handler
-            ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
-
-                @Override
-                public String handleResponse(
-                        final HttpResponse response) throws ClientProtocolException, IOException {
-                    int status = response.getStatusLine().getStatusCode();
-                    if (status >= 200 && status < 300) {
-                        HttpEntity entity = response.getEntity();
-                        return entity != null ? EntityUtils.toString(entity) : null;
-                    } else {
-                        throw new ClientProtocolException("Unexpected response status: " + status);
-                    }
-                }
-
-            };
-            String responseBody = httpClient.execute(httpget, responseHandler);
-            System.out.println("----------------------------------------");
-            System.out.println(responseBody);
-
-            JSONTokener tokener = new JSONTokener(responseBody);
-            JSONObject root = new JSONObject(tokener);
-
-            String taskLsid = root.getString("taskLsid");
-
-            if(taskLsid == null || taskLsid.length() == 0)
-            {
-                throw new Exception("Task lsid was not found");
-            }
-
-            GPTask gpTask = new GPTask();
-            gpTask.setLsid(taskLsid);
-            jobInfo.setGpTask(gpTask);
-
-        } finally {
-            httpClient.close();
-        }
-    }*/
-
     /** Converts a string into something you can safely insert into a URL. */
     @SuppressWarnings("deprecation")
     public static String encodeURIcomponent(String str) {
