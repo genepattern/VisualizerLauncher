@@ -602,7 +602,7 @@ public class VisualizerLauncher
                 //Wait to get exit value
                 try {
                     int exitValue = process.waitFor();
-                    System.exit(exitValue);
+                    //System.exit(exitValue);
                     //frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
                 } catch (InterruptedException e) {
                     // TODO Auto-generated catch block
