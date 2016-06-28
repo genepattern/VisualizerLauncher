@@ -2,6 +2,8 @@
 Launches a GenePattern visualizer from the desktop. Use this as a replacement for the 'Open Visualizer' link embedded in the web page. 
 
 #### To get started ...
+The application is available for download directly from the [releases](https://github.com/genepattern/VisualizerLauncher/releases/latest) page. 
+
 **Mac OS X:** Download the native .app.zip file; Unzip and double-click the app.
 
 **Other java:** Download the jar file. From a Terminal window
