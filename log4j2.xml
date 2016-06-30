@@ -29,6 +29,7 @@
     </Appenders>
 
     <Loggers>
+        <Root level="error"><AppenderRef ref="consoleAppender" /></Root>
         <Logger name="org" level="info" additivity="false">
             <AppenderRef ref="RoutingAppender"/>
         </Logger>
