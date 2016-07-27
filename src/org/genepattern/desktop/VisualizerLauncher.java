@@ -53,8 +53,6 @@ public class VisualizerLauncher
     VisualizerLauncher()
     {
         this.jobInfo = new JobInfo();
-
-        addShutDownHook();
     }
 
     protected Thread copyStream(final InputStream is, final PrintStream out) {
@@ -568,23 +566,6 @@ public class VisualizerLauncher
         }
         JOptionPane.showMessageDialog(
                 null, scrollPane, type, JOptionPane.ERROR_MESSAGE);
-    }
-
-    public void addShutDownHook() {
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                String[] entries = downloadLocation.list();
-                if(entries != null)
-                {
-                    for(String s: entries){
-                        File currentFile = new File(downloadLocation.getPath(),s);
-                       // currentFile.delete();
-                    }
-                    //downloadLocation.delete();
-                }
-            }
-        });
     }
 
     public static void main(String[] args)

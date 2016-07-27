@@ -1,7 +1,5 @@
 package org.genepattern.desktop;
 
-import org.apache.commons.codec.binary.Base64;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -18,6 +16,7 @@ public class Util
     {
         return downloadFile(url, dir, filename, null);
     }
+
     /**
      * Download a URL to a local file and return a File object for it.
      *

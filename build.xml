@@ -1,60 +1,71 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Ant build file -->
 
-<project basedir="" default="package" name="VisualizerLauncher"> 
+<project basedir="" default="package-jar" name="VisualizerLauncher"> 
+    <!-- Hook into One-Jar project -->
+    <property name="one-jar.dir" location="./build_tools/one-jar" />
+    <import file="${one-jar.dir}/build.onejar.xml"/>
+
     <target name="init">
-        <property name="build.dir" value="build"/>
+        <property name="build.dir" value="build" />
+        <property name="classes.dir" value="${build.dir}/classes" />
+        <property name="main.jar" value="${build.dir}/main.jar" />
         <property name="dist.dir" value="dist" />
-        <property name="inclds" value="org/"/>
-        <property name="jar.name" value="project-classes.jar" />
-        <property name="appfile" value="${dist.dir}/visualizerLauncher.jar"/>
+        <property name="dist.jar" value="${dist.dir}/visualizerLauncher.jar" />
 
         <path id="library.classpath">
-            <fileset id="jar.lib" dir="lib" />
+            <fileset dir="lib" />
             <fileset file="log4j2.xml"/>
         </path>
     </target>
 
     <target name="compile" depends="init, clean-classes">
         <mkdir dir="${build.dir}" />
-        <mkdir dir="${build.dir}/classes" />
+        <mkdir dir="${classes.dir}" />
 
-        <javac debug="true" defaultexcludes="true" deprecation="true"
-               destdir="${build.dir}/classes" includes="${inclds}" optimize="false" proceed="false"
-               srcdir="src">
+        <javac includeantruntime="false" debug="true" 
+            destdir="${classes.dir}" 
+            srcdir="src"
+        >
             <classpath refid="library.classpath" />
         </javac>
     </target>
 
-    <!-- quick way to build the Mac.app bundle, create a classes.jar file to add to the bundle -->
     <target name="jar" depends="compile">
-        <jar destfile="${build.dir}/${jar.name}" basedir="${build.dir}/classes" /> 
+        <jar destfile="${main.jar}">
+            <fileset dir="${classes.dir}" />
+            <fileset file="log4j2.xml" />
+        </jar>
     </target>
 
-    <!-- package the application, including 3rd party dependencies, as a single launchable jar file -->
-    <target name="package" depends="jar"
-        description="package the application as a single launchable jar file">
+    <target name="mk-dist-dir" depends="init">
         <mkdir dir="${dist.dir}" />
-        <manifestclasspath property="jar.classpath" jarfile="${appfile}">
-            <classpath refid="library.classpath" />
-        </manifestclasspath>
-
-        <jar basedir="${build.dir}/classes" defaultexcludes="true" excludes="**/*.java" includes="${inclds}"
-             jarfile="${appfile}">
-            <fileset refid="jar.lib"/>
-            <fileset dir="." file="log4j2.xml"/>
+    </target>
+        
+    <!-- package the application, including 3rd party dependencies, as a single launchable jar file -->
+    <!--
+      See: http://one-jar.sourceforge.net
+    -->
+    <target name="package-jar" depends="jar, mk-dist-dir" 
+        description="Create single launchable jar file, including 3rd party dependencies"
+    >
+        <one-jar destfile="${dist.jar}">
             <manifest>
-                <attribute name="Main-Class" value="org.genepattern.desktop.VisualizerLauncher"/>
-                <attribute name="Class-Path" value="${jar.classpath}"/>
+                <attribute name="One-Jar-Main-Class" value="org.genepattern.desktop.VisualizerLauncher" />
             </manifest>
-        </jar>
+            <main jar="${main.jar}" />
+            <!-- include runtime dependencies -->
+            <lib>
+                <fileset dir="lib" includes="*.jar" />
+            </lib>
+        </one-jar>
     </target>
 
     <!-- 
       See: https://bitbucket.org/infinitekind/appbundler
     -->
-    <target name="bundle" depends="package" 
-        description="Package jar file for launching as a Mac OS X application">
+    <target name="package-macosx-bundle" depends="jar, mk-dist-dir"  
+        description="Create launchable Mac OS X application">
 
         <property environment="env"/>
         <taskdef name="bundleapp"
@@ -66,16 +77,18 @@
             displayname="GenePattern Visualizer Launcher"
             identifier="org.genepattern.desktop.VisualizerLauncher"
             mainclassname="org.genepattern.desktop.VisualizerLauncher"
-            classpathref="library.classpath">
-            <classpath file="${build.dir}/${jar.name}" />
+            classpathref="library.classpath"
+        >
+            <classpath file="${main.jar}" />
         </bundleapp>
 
         <zip destfile="${dist.dir}/VisualizerLauncher.app.zip" basedir="${dist.dir}" includes="VisualizerLauncher.app/**" /> 
     </target>
 
-    <target name="sign-bundle" depends="bundle"
-        description="sign the Mac application bundle before distributing">
-
+    <target name="dist" depends="mk-dist-dir, package-jar, package-macosx-bundle" />
+    
+    <target name="sign-bundle" depends="package-macosx-bundle"
+        description="sign the Mac OS X application">
         <echo>
 Code signing is not integrated into the build script. At the Broad Institute we do something like ...
     /sysman/scratch/teixeira/macsign/macsign.sh \
@@ -90,7 +103,7 @@ Code signing is not integrated into the build script. At the Broad Institute we 
     <target name="clean-classes" depends="init"
         description="delete compiled .class files">
         <delete failonerror="false">
-            <fileset dir="build" includes="**/*.class"/>
+            <fileset dir="${classes.dir}" includes="**/*.class"/>
         </delete>
     </target>
 
