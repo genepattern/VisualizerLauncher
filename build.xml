@@ -82,7 +82,13 @@
             <classpath file="${main.jar}" />
         </bundleapp>
 
-        <zip destfile="${dist.dir}/VisualizerLauncher.app.zip" basedir="${dist.dir}" includes="VisualizerLauncher.app/**" /> 
+        <!-- must preserve exec flag of Contents/MacOS/JavaAppLauncher --> 
+        <zip destfile="${dist.dir}/VisualizerLauncher.app.zip">
+            <zipfileset filemode="644" prefix="VisualizerLauncher.app" 
+                dir="${dist.dir}/VisualizerLauncher.app" excludes="Contents/MacOS/JavaAppLauncher" />
+            <zipfileset filemode="755" prefix="VisualizerLauncher.app/Contents/MacOS" 
+                file="${dist.dir}/VisualizerLauncher.app/Contents/MacOS/JavaAppLauncher" />
+        </zip>
     </target>
 
     <target name="dist" depends="mk-dist-dir, package-jar, package-macosx-bundle" />
