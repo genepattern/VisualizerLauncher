@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Ant build file -->
+<!-- 
+    (deprecated) Ant build file
+    Keeping this around for one iteration before removing it from the repo.
+    We are using maven now.
+ -->
 
 <project basedir="" default="package-jar" name="VisualizerLauncher"> 
     <!-- Hook into One-Jar project -->
