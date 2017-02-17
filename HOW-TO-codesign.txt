@@ -1,0 +1,21 @@
+Code signing is not integrated into the build script. At the Broad Institute we do something like ...
+
+1) create a zip file
+   cd target/VisualizerLauncher-1.2.1-SNAPSHOT-r2
+   zip -r VisualizerLauncher.app.zip VisualizerLauncher.app
+
+2) copy it to remote server
+    scp VisualizerLauncher.app.zip <user>@<host>:~/visualizer-launcher
+
+3) sign the code
+    ssh <user>@<host>
+    cd ~/visualizer-launcher
+    mkdir dist
+    /sysman/scratch/teixeira/macsign/macsign.sh \
+        -h xcode \
+        -a `pwd`/VisualizerLauncher.app.zip \
+        -d `pwd`/dist \
+        -i /home/unix/genepatt/.ssh/id_rsa_genepatt \
+        -u igvrole
+
+4) upload this to GitHub release
