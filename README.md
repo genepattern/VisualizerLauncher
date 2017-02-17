@@ -35,4 +35,3 @@ To run on Mac OS X
 For more details ... consult the pom.xml file 
 
     mvn help
-
