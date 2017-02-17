@@ -1,0 +1,254 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd"
+>
+    <!-- 
+      ==================================================
+          GenePattern Visualizer Launcher Maven Project 
+      ==================================================
+      Usage:
+          # launch application (for debugging, testing)
+          mvn exec:exec
+          # package everything up for distribution
+          mvn package
+    -->
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>genepattern.org</groupId>
+  <artifactId>VisualizerLauncher</artifactId>
+  <version>1.2.1</version>
+  <name>VisualizerLauncher</name>
+  <url>http://maven.apache.org</url>
+  
+  <prerequisites>
+    <maven>3.0</maven>
+  </prerequisites>
+  
+  <!-- dummy scm required for buildnumber-maven-plugin --> 
+  <scm>
+    <connection>scm:svn:http://127.0.0.1/dummy</connection>
+    <developerConnection>scm:svn:https://127.0.0.1/dummy</developerConnection>
+    <tag>HEAD</tag>
+    <url>http://127.0.0.1/dummy</url>
+  </scm>
+
+  <build>
+    <!-- 
+    <defaultGoal>clean package exec:exec</defaultGoal>
+    -->
+    <defaultGoal>package</defaultGoal>
+    <pluginManagement>
+        <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>buildnumber-maven-plugin</artifactId>
+        <version>1.4</version>
+        <executions>
+          <execution>
+            <id>buildnumber</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>create</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <doCheck>false</doCheck>
+          <doUpdate>false</doUpdate>
+          <revisionOnScmFailure>unknownbuild</revisionOnScmFailure>
+          <format>{0,number}</format>
+          <items>
+            <item>buildNumber</item>
+          </items>
+        </configuration>
+      </plugin>
+        </plugins>
+    </pluginManagement>
+
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>buildnumber-maven-plugin</artifactId>
+      </plugin>
+
+      <!-- Example: how to add an additional classpath element for junit tests -->
+      <!--
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.12.4</version>
+            <configuration>
+              <additionalClasspathElements>
+                <additionalClasspathElement>${basedir}/src/test/lib/jdom.jar</additionalClasspathElement>
+              </additionalClasspathElements>
+            </configuration>
+          </plugin>
+      -->
+
+    <!-- 
+      ==================================================
+          maven-assembly-plugin 
+      ==================================================
+      Usage:
+          mvn clean compile assembly:single 
+
+      To create an executable jar file which includes all library dependencies.
+           see: http://stackoverflow.com/questions/574594/how-can-i-create-an-executable-jar-with-dependencies-using-maven  
+    -->
+    <plugin>
+      <artifactId>maven-assembly-plugin</artifactId>
+      <configuration>
+        <archive>
+          <manifest>
+            <mainClass>${mainClass}</mainClass>
+          </manifest>
+        </archive>
+        <descriptorRefs>
+          <descriptorRef>jar-with-dependencies</descriptorRef>
+        </descriptorRefs>
+      </configuration>
+      <executions>
+        <execution>
+          <id>make-assembly</id> <!-- this is used for inheritance merges -->
+          <phase>package</phase> <!-- bind to the packaging phase -->
+          <goals>
+            <goal>single</goal>
+          </goals>
+        </execution>
+      </executions>
+    </plugin>
+
+    <!-- 
+      ==================================================
+          appbundle-maven-plugin (Mac OS X)
+      ==================================================
+      To package as a Mac OS X application bundle
+        see: https://github.com/federkasten/appbundle-maven-plugin
+    -->
+    <plugin>
+        <groupId>sh.tak.appbundler</groupId>
+        <artifactId>appbundle-maven-plugin</artifactId>
+        <version>1.2.0</version>
+        <configuration>
+          <mainClass>${mainClass}</mainClass>
+        </configuration>
+        <executions>
+            <execution>
+                <phase>package</phase>
+                <goals>
+                    <goal>bundle</goal>
+                </goals>
+            </execution>
+        </executions>
+    </plugin>
+
+    <!-- 
+      ==================================================
+          exec-maven-plugin
+      ==================================================
+      Run the VisualizerLauncher from the mvn command line.
+      Usage:
+          mvn -q clean package exec:exec 
+          
+          Note: '-q' means quiet, -X for debug output
+    -->
+    <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.5.0</version>
+        <executions>
+            <execution>
+                <id>run-jar</id>
+                <phase>deploy</phase>
+                <goals>
+                    <goal>exec</goal>
+                </goals>
+            </execution>
+        </executions>
+        <configuration>
+            <executable>java</executable>
+            <arguments>
+                <argument>-jar</argument>
+                <argument>${jarFile}</argument>
+                <!-- 
+                    <argument>-classpath</argument>
+                    <classpath/>
+                    <argument>${mainClass}</argument>
+                -->
+            </arguments>
+        </configuration>
+    </plugin>
+    </plugins>
+    <finalName>${project.artifactId}-${project.version}-SNAPSHOT-r${buildNumber}</finalName>
+  </build>
+  
+  <properties>
+    <maven.compiler.source>1.7</maven.compiler.source>
+    <maven.compiler.target>1.7</maven.compiler.target>
+    <maven.build.timestamp.format>yyyy-MM-dd-HHmmss</maven.build.timestamp.format>
+    
+    <mainClass>org.genepattern.desktop.VisualizerLauncher</mainClass>
+    <jarFile>target/${project.artifactId}-${project.version}-SNAPSHOT-r${buildNumber}-jar-with-dependencies.jar</jarFile>
+  </properties>
+
+  <dependencies>
+
+    <!-- https://mvnrepository.com/artifact/commons-codec/commons-codec -->
+    <dependency>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+      <version>1.10</version>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/commons-logging/commons-logging -->
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.2</version>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>4.5.2</version>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpcore -->
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpcore</artifactId>
+      <version>4.4.4</version>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-api -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+      <version>2.5</version>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>2.5</version>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/org.json/json -->
+    <dependency>
+        <groupId>org.json</groupId>
+        <artifactId>json</artifactId>
+        <version>20160810</version>
+    </dependency>
+
+    <!-- for testing -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
+</project>
