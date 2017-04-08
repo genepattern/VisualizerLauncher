@@ -20,17 +20,16 @@ Use **mvn** to build the project with the defaultGoal "package"
     (equivalently) mvn package
     
 This creates packages in the ./target directory.
-* (java executable) VisualizerLauncher-1.2.1-SNAPSHOT-r2-jar-with-dependencies.jar 
-* (Mac OS X app)    VisualizerLauncher-1.2.1-SNAPSHOT-r2/VisualizerLauncher.app
+* (java executable) VisualizerLauncher-{version}-SNAPSHOT-r{build.number}-jar-with-dependencies.jar 
+* (Mac OS X app)    VisualizerLauncher-{version}-SNAPSHOT-r{build.number}/VisualizerLauncher.app
 
 To run as a jar executable
 
     mvn exec:exec 
 
-
 To run on Mac OS X
 
-    open target/VisualizerLauncher-1.2.1-SNAPSHOT-r2/VisualizerLauncher.app
+    open target/VisualizerLauncher-{version}-SNAPSHOT-{build.number}/VisualizerLauncher.app
 
 For more details ... consult the pom.xml file 
 
