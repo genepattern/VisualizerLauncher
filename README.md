@@ -25,7 +25,7 @@ This creates packages in the ./target directory.
 
 To run as a jar executable
 
-    mvn exec:exec 
+    mvn -q clean package exec:exec
 
 To run on Mac OS X
 
