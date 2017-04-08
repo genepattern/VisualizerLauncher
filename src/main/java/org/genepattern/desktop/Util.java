@@ -7,14 +7,65 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 
+import org.apache.commons.codec.binary.Base64;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * Created by nazaire on 4/6/16.
  */
-public class Util
-{
-    public static File downloadFile(URL url, File dir, String filename) throws IOException
+public class Util {
+    final static private Logger log = LogManager.getLogger(Util.class);
+
+    protected static String initBasicAuthString(final String userName, final char[] password) {
+        if (userName==null || userName.length()==0) {
+            throw new IllegalArgumentException("Missing required parameter: username");
+        }
+        String authorizationString = userName + ":";
+        if (password != null && password.length != 0) {
+            authorizationString += String.valueOf(password);
+        }
+        byte[] authEncBytes = Base64.encodeBase64(authorizationString.getBytes());
+        final String basicAuthString = "Basic " + new String(authEncBytes);
+        //basicAuthString = "Basic " + basicAuthString;
+        return basicAuthString;
+    }
+
+    protected static String doGetRequest(final String basicAuthString, final String fromUrl) throws IOException
     {
-        return downloadFile(url, dir, filename, null);
+        final CloseableHttpClient httpClient = HttpClientBuilder.create().build();
+        try {
+            final HttpGet httpget = new HttpGet(fromUrl);
+            httpget.setHeader("Authorization", basicAuthString);
+            log.debug("Executing request " + httpget.getRequestLine());
+
+            // Create a custom response handler
+            final ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
+                @Override
+                public String handleResponse(final HttpResponse response) throws ClientProtocolException, IOException {
+                    final int status = response.getStatusLine().getStatusCode();
+                    if (status >= 200 && status < 300) {
+                        final HttpEntity entity = response.getEntity();
+                        return entity != null ? EntityUtils.toString(entity) : null;
+                    } 
+                    else {
+                        throw new ClientProtocolException("Unexpected response status: " + status);
+                    }
+                }
+            };
+            return httpClient.execute(httpget, responseHandler);
+        }
+        finally {
+            httpClient.close();
+        }
     }
 
     /**
@@ -24,7 +75,7 @@ public class Util
      * @param dir, The directory to download the URL to.
      * @param filename, The filename to download the URL to.
      */
-    public static File downloadFile(URL url, File dir, String filename, String authString) throws IOException {
+    public static File downloadFile(String authString, URL url, File dir, String filename) throws IOException {
         InputStream is = null;
         FileOutputStream fos = null;
         File file = null;
@@ -41,6 +92,10 @@ public class Util
             while ((j = is.read(buf, 0, buf.length)) != -1) {
                 fos.write(buf, 0, j);
             }
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+            throw e;
         }
         finally {
             if (is != null) {
