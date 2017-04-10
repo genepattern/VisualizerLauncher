@@ -45,11 +45,13 @@ import org.json.JSONTokener;
  * Created by nazaire on 4/3/16.
  */
 public class VisualizerLauncher {
-    final static private Logger log = LogManager.getLogger(VisualizerLauncher.class);
+    private static final Logger log = LogManager.getLogger(VisualizerLauncher.class);
+    
+    public static final String GP_URL_DEFAULT = "https://genepattern.broadinstitute.org/gp";
+    public static final String REST_API_JOB_PATH  = "/rest/v1/jobs";
+    public static final String REST_API_TASK_PATH = "/rest/v1/tasks";
 
     private File downloadLocation;
-    public static String REST_API_JOB_PATH  = "/rest/v1/jobs";
-    public static String REST_API_TASK_PATH = "/rest/v1/tasks";
 
     private JFrame frame;
     private JTextField serverField;
@@ -60,14 +62,14 @@ public class VisualizerLauncher {
 
     private String gpServer;
     private JobInfo jobInfo;
-    private String basicAuthString;
+    private String basicAuthHeader;
 
     VisualizerLauncher() {
         this.jobInfo = new JobInfo();
     }
 
+    /** create thread to read from a process output or error stream */
     protected Thread copyStream(final InputStream is, final PrintStream out) {
-        // create thread to read from the a process output or error stream
         Thread copyThread = new Thread(new Runnable() {
             public void run() {
                 BufferedReader in = new BufferedReader(new InputStreamReader(is));
@@ -76,8 +78,9 @@ public class VisualizerLauncher {
                     while ((line = in.readLine()) != null) {
                         out.println(line);
                     }
-                } catch (IOException ioe) {
-                    System.err.println("Error reading from process stream.");
+                } 
+                catch (IOException ioe) {
+                    log.error("Error reading from process stream.", ioe);
                 }
             }
         });
@@ -90,8 +93,8 @@ public class VisualizerLauncher {
         JPanel panel = new JPanel(new GridLayout(4, 1));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        serverField = new JTextField("https://genepattern.broadinstitute.org/gp");
-        TextPrompt serverFieldPrompt = new TextPrompt("https://genepattern.broadinstitute.org/gp", serverField);
+        serverField = new JTextField(GP_URL_DEFAULT);
+        TextPrompt serverFieldPrompt = new TextPrompt(GP_URL_DEFAULT, serverField);
         serverFieldPrompt.changeAlpha(0.4f);
         final JLabel serverLabel = new JLabel("server: ");
         serverLabel.setLabelFor(serverField);
@@ -132,15 +135,7 @@ public class VisualizerLauncher {
                 }
 
                 if (userName != null && userName.length() > 0) {
-                    //String authorizationString = userName + ":";
-
-                    //if (password != null && password.length != 0) {
-                    //    authorizationString += String.valueOf(password);
-                    //}
-                    //byte[] authEncBytes = Base64.encodeBase64(authorizationString.getBytes());
-                    //basicAuthString = new String(authEncBytes);
-                    //basicAuthString = "Basic " + basicAuthString;
-                    basicAuthString = Util.initBasicAuthString(userName, password);
+                    basicAuthHeader = Util.initBasicAuthHeader(userName, String.valueOf(password));
                 }
                 else {
                     displayMsg("Please enter a username", true);
@@ -148,20 +143,16 @@ public class VisualizerLauncher {
                     return;
                 }
 
-                if(jobNumber == null || jobNumber.length() == 0)
-                {
+                if(jobNumber == null || jobNumber.length() == 0) {
                     displayMsg("Please enter a job number", true);
                     statusMsgField.setText("");
                     return;
                 }
-                else
-                {
-                    try
-                    {
+                else {
+                    try {
                         Integer.parseInt(jobNumber);
                     }
-                    catch(NumberFormatException ne)
-                    {
+                    catch(NumberFormatException ne) {
                         displayMsg("Job number must be an integer", true);
                         statusMsgField.setText("");
                         return;
@@ -225,7 +216,7 @@ public class VisualizerLauncher {
             final int slashIndex = supportFileURL.lastIndexOf('=');
             final String filenameWithExtension =  supportFileURL.substring(slashIndex + 1);
             try {
-                Util.downloadFile(basicAuthString, new URL(supportFileURL), downloadLocation, filenameWithExtension);
+                Util.downloadFile(basicAuthHeader, new URL(supportFileURL), downloadLocation, filenameWithExtension);
             }
             catch (Throwable t) {
                 throw new Exception("Error downloading support file: '"+supportFileURL+"'"+t.getMessage());
@@ -240,7 +231,7 @@ public class VisualizerLauncher {
             throw new IllegalArgumentException("No valid job found");
         }
         String getJobAPICall = gpServer + VisualizerLauncher.REST_API_JOB_PATH + "/" + jobInfo.getJobNumber();
-        String response = Util.doGetRequest(basicAuthString, getJobAPICall);
+        String response = Util.doGetRequest(basicAuthHeader, getJobAPICall);
 
         JSONTokener tokener = new JSONTokener(response);
         JSONObject root = new JSONObject(tokener);
@@ -284,7 +275,7 @@ public class VisualizerLauncher {
         }
 
         String getTaskRESTCall = gpServer + REST_API_TASK_PATH  + "/" + jobInfo.getGpTask().getLsid() + "?includeSupportFiles=true";
-        String response = Util.doGetRequest(basicAuthString, getTaskRESTCall);
+        String response = Util.doGetRequest(basicAuthHeader, getTaskRESTCall);
 
         JSONTokener tokener = new JSONTokener(response);
         JSONObject root = new JSONObject(tokener);
@@ -356,7 +347,7 @@ public class VisualizerLauncher {
         //get the substituted commandline from the serverField
         String getTaskRESTCall = gpServer + REST_API_JOB_PATH  + "/" + jobInfo.getJobNumber() + "/visualizerCmdLine?commandline=" + encodeURIcomponent(cmdLine);
 
-        String response = Util.doGetRequest(basicAuthString, getTaskRESTCall);
+        String response = Util.doGetRequest(basicAuthHeader, getTaskRESTCall);
 
         JSONTokener tokener = new JSONTokener(response);
         JSONObject root = new JSONObject(tokener);
@@ -400,7 +391,7 @@ public class VisualizerLauncher {
 
         // GET /gp/rest/v1/jobs/{jobId}/visualizerInputFiles{.json}
         final String inputFilesJson =
-                getVisualizerInputFilesJson(basicAuthString, gpServer, jobInfo.getJobNumber());
+                getVisualizerInputFilesJson(basicAuthHeader, gpServer, jobInfo.getJobNumber());
         final JSONObject inputFilesJsonObj=new JSONObject(inputFilesJson);
         final JSONArray inputFiles=inputFilesJsonObj.getJSONArray("inputFiles");
         final Map<String, String> map = new HashMap<String, String>();
@@ -426,7 +417,7 @@ public class VisualizerLauncher {
             throws MalformedURLException, IOException {
         final String filenameWithExtension=filenameWithExt(inputFile);
         final URL fileURL = new URL(inputFile);
-        Util.downloadFile(basicAuthString, fileURL, downloadLocation, filenameWithExtension);
+        Util.downloadFile(basicAuthHeader, fileURL, downloadLocation, filenameWithExtension);
         return fileURL;
     }
 

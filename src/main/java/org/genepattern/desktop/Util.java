@@ -24,27 +24,37 @@ import org.apache.logging.log4j.Logger;
  */
 public class Util {
     final static private Logger log = LogManager.getLogger(Util.class);
-
-    protected static String initBasicAuthString(final String userName, final char[] password) {
-        if (userName==null || userName.length()==0) {
-            throw new IllegalArgumentException("Missing required parameter: username");
-        }
-        String authorizationString = userName + ":";
-        if (password != null && password.length != 0) {
-            authorizationString += String.valueOf(password);
-        }
-        byte[] authEncBytes = Base64.encodeBase64(authorizationString.getBytes());
-        final String basicAuthString = "Basic " + new String(authEncBytes);
-        //basicAuthString = "Basic " + basicAuthString;
-        return basicAuthString;
+    
+    public static boolean isNullOrEmpty(final String str) {
+        return (str==null || str.length()==0);
     }
 
-    protected static String doGetRequest(final String basicAuthString, final String fromUrl) throws IOException
+    public static String nullToEmpty(final String str) {
+        if (str==null) {
+            return "";
+        }
+        else {
+            return str;
+        }
+    }
+
+    protected static String initBasicAuthHeader(final String username, final String password) {
+        if (username==null || username.length()==0) {
+            throw new IllegalArgumentException("Missing required parameter: username");
+        }
+        final String user=username+":"+nullToEmpty(password);
+        byte[] authEncBytes = Base64.encodeBase64(user.getBytes());
+        return "Basic " + new String(authEncBytes);
+    }
+
+    protected static String doGetRequest(final String basicAuthHeader, final String fromUrl) throws IOException
     {
         final CloseableHttpClient httpClient = HttpClientBuilder.create().build();
         try {
             final HttpGet httpget = new HttpGet(fromUrl);
-            httpget.setHeader("Authorization", basicAuthString);
+            if (!isNullOrEmpty(basicAuthHeader)) {
+                httpget.setHeader("Authorization", basicAuthHeader);
+            }
             log.debug("Executing request " + httpget.getRequestLine());
 
             // Create a custom response handler
