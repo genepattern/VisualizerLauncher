@@ -25,6 +25,26 @@
   <prerequisites>
     <maven>3.0</maven>
   </prerequisites>
+
+  <properties>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.build.timestamp.format>yyyy-MM-dd-HHmmss</maven.build.timestamp.format>
+    
+    <mainClass>org.genepattern.desktop.VisualizerLauncher</mainClass>
+    <jarFile>${project.build.directory}/${project.artifactId}-${project.version}-SNAPSHOT-r${buildNumber}-jar-with-dependencies.jar</jarFile>
+
+    <!-- code signing certificate -->
+    <signjar.keystore>${project.build.directory}/keystore.default</signjar.keystore>
+    <signjar.alias>Genepattern</signjar.alias>
+    <signjar.storepass>gEnEpAtTeRn</signjar.storepass>
+    <signjar.keypass>${signjar.storepass}</signjar.keypass>
+    <signjar.dname>CN=GenePattern, OU=Cancer Genomics, O=Broad Institute, L=Cambridge, S=MA, C=US, EMAILADDRESS=gp-help@broadinstitute.org</signjar.dname>
+    <signjar.tsaurl>http://timestamp.comodoca.com/rfc3161</signjar.tsaurl>
+    
+    <!-- debugging -->
+    <verbose>false</verbose>
+  </properties>
   
   <!-- dummy scm required for buildnumber-maven-plugin --> 
   <scm>
@@ -39,6 +59,7 @@
     <defaultGoal>clean package exec:exec</defaultGoal>
     -->
     <defaultGoal>package</defaultGoal>
+    <finalName>${project.artifactId}-${project.version}-SNAPSHOT-r${buildNumber}</finalName>
     <pluginManagement>
         <plugins>
       <plugin>
@@ -112,13 +133,85 @@
       <executions>
         <execution>
           <id>make-assembly</id> <!-- this is used for inheritance merges -->
-          <phase>package</phase> <!-- bind to the packaging phase -->
+          <phase>prepare-package</phase> <!-- bind to the prepare-package phase -->
           <goals>
             <goal>single</goal>
           </goals>
         </execution>
       </executions>
     </plugin>
+
+    <!-- 
+      ==================================================
+          keytool plugin
+      ==================================================
+      Generate default keystore file
+      See:
+        http://www.mojohaus.org/keytool/
+        http://www.mojohaus.org/keytool/keytool-maven-plugin/
+        https://mvnrepository.com/artifact/org.codehaus.mojo/keytool-maven-plugin 
+      -->
+    <plugin>
+      <groupId>org.codehaus.mojo</groupId>
+      <artifactId>keytool-maven-plugin</artifactId>
+      <version>1.5</version>
+      <configuration>
+        <verbose>${verbose}</verbose>
+        <validity>1800</validity> <!-- 5 years -->
+        <skipIfExist>true</skipIfExist>
+        <keystore>${signjar.keystore}</keystore>
+        <storepass>${signjar.storepass}</storepass>
+        <keypass>${signjar.keypass}</keypass>
+        <alias>${signjar.alias}</alias>
+        <dname>${signjar.dname}</dname>
+      </configuration>
+      <executions>
+        <execution>
+          <phase>generate-resources</phase>
+          <id>generateKeyPair</id>
+          <goals>
+            <goal>generateKeyPair</goal>
+          </goals>
+        </execution>
+      </executions>
+    </plugin>
+
+    <!-- 
+      ==================================================
+          maven-jarsigner-plugin
+      ==================================================
+      Sign jar file
+      See: 
+        http://maven.apache.org/plugins/maven-jarsigner-plugin/
+     -->
+     <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jarsigner-plugin</artifactId>
+        <version>1.4</version>
+        <configuration>
+          <archive>${jarFile}</archive>
+          <verbose>${verbose}</verbose>
+          <keystore>${signjar.keystore}</keystore>
+          <alias>${signjar.alias}</alias>
+          <storepass>${signjar.storepass}</storepass>
+          <keypass>${signjar.keypass}</keypass>
+          <tsa>${signjar.tsaurl}</tsa>
+        </configuration>
+        <executions>
+          <execution>
+            <id>sign</id>
+            <goals>
+              <goal>sign</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>verify</id>
+            <goals>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
 
     <!-- 
       ==================================================
@@ -175,27 +268,12 @@
             <arguments>
                 <argument>-jar</argument>
                 <argument>${jarFile}</argument>
-                <!-- 
-                    <argument>-classpath</argument>
-                    <classpath/>
-                    <argument>${mainClass}</argument>
-                -->
             </arguments>
         </configuration>
     </plugin>
     </plugins>
-    <finalName>${project.artifactId}-${project.version}-SNAPSHOT-r${buildNumber}</finalName>
   </build>
   
-  <properties>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
-    <maven.build.timestamp.format>yyyy-MM-dd-HHmmss</maven.build.timestamp.format>
-    
-    <mainClass>org.genepattern.desktop.VisualizerLauncher</mainClass>
-    <jarFile>target/${project.artifactId}-${project.version}-SNAPSHOT-r${buildNumber}-jar-with-dependencies.jar</jarFile>
-  </properties>
-
   <dependencies>
 
     <!-- https://mvnrepository.com/artifact/commons-codec/commons-codec -->
