@@ -17,14 +17,36 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>genepattern.org</groupId>
-  <artifactId>VisualizerLauncher</artifactId>
-  <version>1.2.2</version>
+  <artifactId>visualizerLauncher</artifactId>
+  <version>1.2.3-SNAPSHOT</version>
   <name>VisualizerLauncher</name>
   <url>http://maven.apache.org</url>
   
   <prerequisites>
     <maven>3.0</maven>
   </prerequisites>
+
+  <properties>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.build.timestamp.format>yyyy-MM-dd-HHmmss</maven.build.timestamp.format>
+
+    <mainClass>org.genepattern.desktop.VisualizerLauncher</mainClass>
+    <jarName>${project.artifactId}-${project.version}</jarName>
+    <!-- the signed executable jar file, includes all dependencies -->
+    <jarFile>${project.build.directory}/${jarName}-full.jar</jarFile>
+
+    <!-- code signing certificate -->
+    <signjar.keystore>${project.build.directory}/keystore.default</signjar.keystore>
+    <signjar.alias>Genepattern</signjar.alias>
+    <signjar.storepass>gEnEpAtTeRn</signjar.storepass>
+    <signjar.keypass>${signjar.storepass}</signjar.keypass>
+    <signjar.dname>CN=GenePattern, OU=Cancer Genomics, O=Broad Institute, L=Cambridge, S=MA, C=US, EMAILADDRESS=gp-help@broadinstitute.org</signjar.dname>
+    <signjar.tsaurl>http://timestamp.comodoca.com/rfc3161</signjar.tsaurl>
+    
+    <!-- debugging -->
+    <verbose>false</verbose>
+  </properties>
   
   <!-- dummy scm required for buildnumber-maven-plugin --> 
   <scm>
@@ -39,32 +61,33 @@
     <defaultGoal>clean package exec:exec</defaultGoal>
     -->
     <defaultGoal>package</defaultGoal>
+    <finalName>${jarName}</finalName>
     <pluginManagement>
-        <plugins>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>buildnumber-maven-plugin</artifactId>
-        <version>1.4</version>
-        <executions>
-          <execution>
-            <id>buildnumber</id>
-            <phase>validate</phase>
-            <goals>
-              <goal>create</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <doCheck>false</doCheck>
-          <doUpdate>false</doUpdate>
-          <revisionOnScmFailure>unknownbuild</revisionOnScmFailure>
-          <format>{0,number}</format>
-          <items>
-            <item>buildNumber</item>
-          </items>
-        </configuration>
-      </plugin>
-        </plugins>
+      <plugins>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>buildnumber-maven-plugin</artifactId>
+          <version>1.4</version>
+          <executions>
+            <execution>
+              <id>buildnumber</id>
+              <phase>validate</phase>
+              <goals>
+                <goal>create</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <doCheck>false</doCheck>
+            <doUpdate>false</doUpdate>
+            <revisionOnScmFailure>unknownbuild</revisionOnScmFailure>
+            <format>{0,number}</format>
+            <items>
+              <item>buildNumber</item>
+            </items>
+          </configuration>
+        </plugin>
+      </plugins>
     </pluginManagement>
 
     <plugins>
@@ -89,6 +112,39 @@
 
     <!-- 
       ==================================================
+          maven-shade-plugin 
+      ==================================================
+      Create executable jar file including all library dependencies.
+      Use as an alternative to the maven-assembly-plugin
+      See:
+        https://maven.apache.org/plugins/maven-shade-plugin/
+        https://maven.apache.org/plugins/maven-shade-plugin/shade-mojo.html
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <finalName>${jarName}-full</finalName>
+              <transformers>
+                <!-- add Main-Class to manifest file -->
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                    <mainClass>${mainClass}</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+    <!-- 
+      ==================================================
           maven-assembly-plugin 
       ==================================================
       Usage:
@@ -97,28 +153,103 @@
       Create executable jar file including all library dependencies.
       See: http://stackoverflow.com/questions/574594/how-can-i-create-an-executable-jar-with-dependencies-using-maven  
     -->
-    <plugin>
-      <artifactId>maven-assembly-plugin</artifactId>
-      <configuration>
-        <archive>
-          <manifest>
-            <mainClass>${mainClass}</mainClass>
-          </manifest>
-        </archive>
-        <descriptorRefs>
-          <descriptorRef>jar-with-dependencies</descriptorRef>
-        </descriptorRefs>
-      </configuration>
-      <executions>
-        <execution>
-          <id>make-assembly</id> <!-- this is used for inheritance merges -->
-          <phase>package</phase> <!-- bind to the packaging phase -->
-          <goals>
-            <goal>single</goal>
-          </goals>
-        </execution>
-      </executions>
-    </plugin>
+    <!--
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>${mainClass}</mainClass>
+            </manifest>
+          </archive>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+          <appendAssemblyId>true</appendAssemblyId>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id> --><!-- this is used for inheritance merges --><!--
+            <phase>prepare-package</phase> --><!-- bind to the prepare-package phase --><!--
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+-->
+      
+    <!-- 
+      ==================================================
+          keytool plugin
+      ==================================================
+      Generate default keystore file
+      See:
+        http://www.mojohaus.org/keytool/
+        http://www.mojohaus.org/keytool/keytool-maven-plugin/
+        https://mvnrepository.com/artifact/org.codehaus.mojo/keytool-maven-plugin 
+      -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>keytool-maven-plugin</artifactId>
+        <version>1.5</version>
+        <configuration>
+          <verbose>${verbose}</verbose>
+          <validity>1800</validity> <!-- 5 years -->
+          <skipIfExist>true</skipIfExist>
+          <keystore>${signjar.keystore}</keystore>
+          <storepass>${signjar.storepass}</storepass>
+          <keypass>${signjar.keypass}</keypass>
+          <alias>${signjar.alias}</alias>
+          <dname>${signjar.dname}</dname>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>generate-resources</phase>
+            <id>generateKeyPair</id>
+            <goals>
+              <goal>generateKeyPair</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+    <!-- 
+      ==================================================
+          maven-jarsigner-plugin
+      ==================================================
+      Sign jar file
+      See: 
+        http://maven.apache.org/plugins/maven-jarsigner-plugin/
+     -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jarsigner-plugin</artifactId>
+        <version>1.4</version>
+        <configuration>
+          <archive>${jarFile}</archive>
+          <verbose>${verbose}</verbose>
+          <keystore>${signjar.keystore}</keystore>
+          <alias>${signjar.alias}</alias>
+          <storepass>${signjar.storepass}</storepass>
+          <keypass>${signjar.keypass}</keypass>
+          <tsa>${signjar.tsaurl}</tsa>
+        </configuration>
+        <executions>
+          <execution>
+            <id>sign</id>
+            <goals>
+              <goal>sign</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>verify</id>
+            <goals>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
 
     <!-- 
       ==================================================
@@ -129,23 +260,24 @@
       Package as a Mac OS X application bundle
       See: https://github.com/federkasten/appbundle-maven-plugin
     -->
-    <plugin>
+      <plugin>
         <groupId>sh.tak.appbundler</groupId>
         <artifactId>appbundle-maven-plugin</artifactId>
         <version>1.2.0</version>
         <configuration>
           <mainClass>${mainClass}</mainClass>
           <jvmVersion>1.8+</jvmVersion>
+          <generateDiskImageFile>false</generateDiskImageFile>
         </configuration>
         <executions>
-            <execution>
-                <phase>package</phase>
-                <goals>
-                    <goal>bundle</goal>
-                </goals>
-            </execution>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>bundle</goal>
+            </goals>
+          </execution>
         </executions>
-    </plugin>
+      </plugin>
 
     <!-- 
       ==================================================
@@ -157,45 +289,30 @@
           
           Note: '-q' means quiet, -X for debug output
     -->
-    <plugin>
+      <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <version>1.5.0</version>
         <executions>
-            <execution>
-                <id>run-jar</id>
-                <phase>deploy</phase>
-                <goals>
-                    <goal>exec</goal>
-                </goals>
-            </execution>
+          <execution>
+            <id>run-jar</id>
+            <phase>deploy</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+          </execution>
         </executions>
         <configuration>
-            <executable>java</executable>
-            <arguments>
-                <argument>-jar</argument>
-                <argument>${jarFile}</argument>
-                <!-- 
-                    <argument>-classpath</argument>
-                    <classpath/>
-                    <argument>${mainClass}</argument>
-                -->
-            </arguments>
+          <executable>java</executable>
+          <arguments>
+            <argument>-jar</argument>
+            <argument>${jarFile}</argument>
+          </arguments>
         </configuration>
-    </plugin>
+      </plugin>
     </plugins>
-    <finalName>${project.artifactId}-${project.version}-SNAPSHOT-r${buildNumber}</finalName>
   </build>
   
-  <properties>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
-    <maven.build.timestamp.format>yyyy-MM-dd-HHmmss</maven.build.timestamp.format>
-    
-    <mainClass>org.genepattern.desktop.VisualizerLauncher</mainClass>
-    <jarFile>target/${project.artifactId}-${project.version}-SNAPSHOT-r${buildNumber}-jar-with-dependencies.jar</jarFile>
-  </properties>
-
   <dependencies>
 
     <!-- https://mvnrepository.com/artifact/commons-codec/commons-codec -->
