@@ -7,12 +7,15 @@
         GenePattern Visualizer Launcher Maven Project 
     ==================================================
     Usage:
-      # launch application (for debugging, testing)
-      mvn -q clean package exec:exec
+      # run visualizer launcher (for debugging, testing)
+      mvn -q clean package exec:java
       # create single jar application
       mvn clean compile assembly:single 
       # create Mac OS X application bundle
       mvn package appbundle:bundle
+      
+      # run visualizer launcher with the java command
+      java -jar launcher/${jarName}-full.jar
   -->
 
   <modelVersion>4.0.0</modelVersion>
@@ -32,6 +35,7 @@
     <maven.build.timestamp.format>yyyy-MM-dd-HHmmss</maven.build.timestamp.format>
 
     <mainClass>org.genepattern.desktop.VisualizerLauncher</mainClass>
+    <exec.mainClass>${mainClass}</exec.mainClass>
     <jarName>${project.artifactId}-${project.version}</jarName>
     <!-- the signed executable jar file, includes all dependencies -->
     <jarFile>${project.build.directory}/${jarName}-full.jar</jarFile>
@@ -285,32 +289,17 @@
       ==================================================
       Run the VisualizerLauncher from the mvn command line.
       Usage:
-          mvn -q clean package exec:exec 
-          
-          Note: '-q' means quiet, -X for debug output
+          mvn -q clean package exec:java
+      Note: '-q' means quiet, -X for debug output
     -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
-        <version>1.5.0</version>
-        <executions>
-          <execution>
-            <id>run-jar</id>
-            <phase>deploy</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <executable>java</executable>
-          <arguments>
-            <argument>-jar</argument>
-            <argument>${jarFile}</argument>
-          </arguments>
-        </configuration>
+        <version>1.6.0</version>
       </plugin>
+
     </plugins>
+
   </build>
   
   <dependencies>
