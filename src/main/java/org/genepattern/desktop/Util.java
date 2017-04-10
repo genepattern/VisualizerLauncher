@@ -1,9 +1,12 @@
 package org.genepattern.desktop;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.URL;
 import java.net.URLConnection;
 
@@ -125,4 +128,55 @@ public class Util {
         }
         return file;
     }
+    
+    /** create thread to read from a process output or error stream */
+    protected static final Thread copyStream(final InputStream is, final PrintStream out) {
+        Thread copyThread = new Thread(new Runnable() {
+            public void run() {
+                BufferedReader in = new BufferedReader(new InputStreamReader(is));
+                String line;
+                try {
+                    while ((line = in.readLine()) != null) {
+                        out.println(line);
+                    }
+                } 
+                catch (IOException ioe) {
+                    log.error("Error reading from process stream.", ioe);
+                }
+            }
+        });
+        copyThread.setDaemon(true);
+        copyThread.start();
+        return copyThread;
+    }
+
+    public static void runCommand(final String[] command) { 
+        Thread t = new Thread() {
+            public void run() {
+                Process process = null;
+                try {
+                    ProcessBuilder probuilder = new ProcessBuilder(command);
+                    process = probuilder.start();
+                }
+                catch (IOException e) {
+                    log.error("Error starting visualizer, command="+command,  e);
+                    return;
+                }
+
+                // drain the output and error streams
+                copyStream(process.getInputStream(), System.out);
+                copyStream(process.getErrorStream(), System.err);
+
+                try {
+                    @SuppressWarnings("unused")
+                    int exitValue = process.waitFor();
+                } 
+                catch (InterruptedException e) {
+                    log.error(e);
+                }
+            }
+        };
+        t.start();
+    }
+
 }

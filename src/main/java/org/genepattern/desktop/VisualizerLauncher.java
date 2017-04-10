@@ -7,12 +7,8 @@ import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -66,27 +62,6 @@ public class VisualizerLauncher {
 
     VisualizerLauncher() {
         this.jobInfo = new JobInfo();
-    }
-
-    /** create thread to read from a process output or error stream */
-    protected Thread copyStream(final InputStream is, final PrintStream out) {
-        Thread copyThread = new Thread(new Runnable() {
-            public void run() {
-                BufferedReader in = new BufferedReader(new InputStreamReader(is));
-                String line;
-                try {
-                    while ((line = in.readLine()) != null) {
-                        out.println(line);
-                    }
-                } 
-                catch (IOException ioe) {
-                    log.error("Error reading from process stream.", ioe);
-                }
-            }
-        });
-        copyThread.setDaemon(true);
-        copyThread.start();
-        return copyThread;
     }
 
     private void login() {
@@ -370,16 +345,7 @@ public class VisualizerLauncher {
 
         log.info("running command " + Arrays.asList(cmdLineList));
         jobInfo.setCommandLine(cmdLineList);
-        try {
-            runCommand(jobInfo.getCommandLine());
-            statusMsgField.setText("");
-        }
-        catch (IOException e) {
-            final String msg = "An error occurred while running the visualizer: " + e.getLocalizedMessage();
-            log.error(msg, e);
-            displayMsg(msg, true);
-            return;
-        }
+        Util.runCommand(jobInfo.getCommandLine());
     }
 
     protected void downloadInputFiles() throws Exception {
@@ -462,41 +428,6 @@ public class VisualizerLauncher {
             statusMsgField.setText("");
             displayMsg(msg, true);
         }
-    }
-
-    public void runCommand(final String[] command) throws IOException {
-        Thread t = new Thread() {
-            public void run() {
-                Process process = null;
-                try {
-                    ProcessBuilder probuilder = new ProcessBuilder(command);
-                    process = probuilder.start();
-                }
-                catch (IOException e1) {
-                    e1.printStackTrace();
-
-                    String msg = "An error occurred while running the visualizer: " + e1.getLocalizedMessage();
-                    log.error(msg);
-                    statusMsgField.setText("");
-                    displayMsg(msg, true);
-
-                    return;
-                }
-
-                // drain the output and error streams
-                copyStream(process.getInputStream(), System.out);
-                copyStream(process.getErrorStream(), System.err);
-
-                try {
-                    @SuppressWarnings("unused")
-                    int exitValue = process.waitFor();
-                } 
-                catch (InterruptedException e) {
-                    log.error(e);
-                }
-            }
-        };
-        t.start();
     }
 
     private void displayMsg(String msg, boolean isError) {
