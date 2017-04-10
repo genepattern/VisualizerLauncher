@@ -18,7 +18,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>genepattern.org</groupId>
   <artifactId>visualizerLauncher</artifactId>
-  <version>1.2.3</version>
+  <version>1.2.3-SNAPSHOT</version>
   <name>VisualizerLauncher</name>
   <url>http://maven.apache.org</url>
   
@@ -30,10 +30,11 @@
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <maven.build.timestamp.format>yyyy-MM-dd-HHmmss</maven.build.timestamp.format>
-    
+
     <mainClass>org.genepattern.desktop.VisualizerLauncher</mainClass>
-    <jarName>${project.artifactId}-${project.version}-r${buildNumber}</jarName>
-    <jarFile>${project.build.directory}/${jarName}-jar-with-dependencies.jar</jarFile>
+    <jarName>${project.artifactId}-${project.version}</jarName>
+    <!-- the signed executable jar file, includes all dependencies -->
+    <jarFile>${project.build.directory}/${jarName}-full.jar</jarFile>
 
     <!-- code signing certificate -->
     <signjar.keystore>${project.build.directory}/keystore.default</signjar.keystore>
@@ -111,6 +112,39 @@
 
     <!-- 
       ==================================================
+          maven-shade-plugin 
+      ==================================================
+      Create executable jar file including all library dependencies.
+      Use as an alternative to the maven-assembly-plugin
+      See:
+        https://maven.apache.org/plugins/maven-shade-plugin/
+        https://maven.apache.org/plugins/maven-shade-plugin/shade-mojo.html
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <finalName>${jarName}-full</finalName>
+              <transformers>
+                <!-- add Main-Class to manifest file -->
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                    <mainClass>${mainClass}</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+    <!-- 
+      ==================================================
           maven-assembly-plugin 
       ==================================================
       Usage:
@@ -119,6 +153,7 @@
       Create executable jar file including all library dependencies.
       See: http://stackoverflow.com/questions/574594/how-can-i-create-an-executable-jar-with-dependencies-using-maven  
     -->
+    <!--
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <configuration>
@@ -134,15 +169,16 @@
         </configuration>
         <executions>
           <execution>
-            <id>make-assembly</id> <!-- this is used for inheritance merges -->
-            <phase>prepare-package</phase> <!-- bind to the prepare-package phase -->
+            <id>make-assembly</id> --><!-- this is used for inheritance merges --><!--
+            <phase>prepare-package</phase> --><!-- bind to the prepare-package phase --><!--
             <goals>
               <goal>single</goal>
             </goals>
           </execution>
         </executions>
       </plugin>
-
+-->
+      
     <!-- 
       ==================================================
           keytool plugin
