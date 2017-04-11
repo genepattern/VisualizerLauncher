@@ -297,7 +297,7 @@ public class VisualizerLauncher {
         gpTask.setCommandLine(commandLine);
     }
 
-    private void prepareCommandLine() throws IOException {
+    private void prepareCommandLineStep() throws IOException {
         if (jobInfo == null 
                 || jobInfo.getGpTask() == null 
                 || jobInfo.getGpTask().getCommandLine() == null
@@ -307,46 +307,44 @@ public class VisualizerLauncher {
         }
         String cmdLine = jobInfo.getGpTask().getCommandLine();
 
-        //substitute <libdir> on the commandline with empty string since
-        //all support files are in the current directory
+        //substitute <libdir> with the downloadLocation (aka local libdir)
         cmdLine = cmdLine.replace("<libdir>", downloadLocation.getAbsolutePath() + "/");
+        //substitute <path.separator> on local VM, not necessarily the same as server 
+        cmdLine = cmdLine.replace("<path.separator>", File.pathSeparator);
 
-        //substitute the <java> on the command
+        //substitute <java> 
         String java = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
         //add .exe extension if this is Windows
         java += (System.getProperty("os.name").startsWith("Windows") ? ".exe" : "");
         cmdLine = cmdLine.replace("<java>", "\"" + java + "\"");
 
         //get the substituted commandline from the serverField
-        String getTaskRESTCall = gpServer + REST_API_JOB_PATH  + "/" + jobInfo.getJobNumber() + "/visualizerCmdLine?commandline=" + encodeURIcomponent(cmdLine);
+        final String getTaskRESTCall = 
+                gpServer + REST_API_JOB_PATH  + "/" + jobInfo.getJobNumber() + "/visualizerCmdLine?commandline=" + encodeURIcomponent(cmdLine);
+        final String response = Util.doGetRequest(basicAuthHeader, getTaskRESTCall);
 
-        String response = Util.doGetRequest(basicAuthHeader, getTaskRESTCall);
+        final JSONTokener tokener = new JSONTokener(response);
+        final JSONObject root = new JSONObject(tokener);
+        final JSONArray cmdLineArr = root.getJSONArray("commandline");
+        log.debug("commandLine (from server): " + cmdLineArr);
 
-        JSONTokener tokener = new JSONTokener(response);
-        JSONObject root = new JSONObject(tokener);
-
-        JSONArray cmdLineArr = root.getJSONArray("commandline");
-        log.info("commandline: " + cmdLineArr);
-
-        Map<String, String> inputURLMap = jobInfo.getInputURLToFilePathMap();
-        String[] cmdLineList = new String[cmdLineArr.length()];
-        for(int i=0;i< cmdLineArr.length(); i++)
-        {
+        final Map<String, String> inputURLMap = jobInfo.getInputURLToFilePathMap();
+        final String[] cmdLineList = new String[cmdLineArr.length()];
+        for(int i=0;i< cmdLineArr.length(); i++) {
             String argValue = cmdLineArr.getString(i);
-            if(inputURLMap.containsKey(argValue))
-            {
+            if(inputURLMap.containsKey(argValue)) {
                 argValue = downloadLocation.getAbsolutePath() + "/" + inputURLMap.get(argValue);
             }
-
             cmdLineList[i] = argValue;
         }
 
-        log.info("running command " + Arrays.asList(cmdLineList));
+        log.debug("commandLine (local): " + Arrays.asList(cmdLineList));
         jobInfo.setCommandLine(cmdLineList);
     }
 
     private void runVisualizer() throws IOException {
         try {
+            log.info("running command " + Arrays.asList(jobInfo.getCommandLine()));
             CommandUtil.runCommand(jobInfo.getCommandLine());
         } 
         catch (IOException e) {
@@ -426,7 +424,7 @@ public class VisualizerLauncher {
             
             status="preparing command line";
             log.info(status+" ...");
-            prepareCommandLine();
+            prepareCommandLineStep();
 
             status="launching visualizer";
             log.info(status+" ...");

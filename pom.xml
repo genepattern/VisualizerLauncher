@@ -16,12 +16,19 @@
       
       # run visualizer launcher with the java command
       java -jar launcher/${jarName}-full.jar
+      
+      
+      # use a different certificate ...
+      mvn -Dsignjar.keystore=${HOME}/.gp_build/genepattern-codesign.jks
+        -Dsignjar.alias=codesign
+        -Dsignjar.storepass=....
+        
   -->
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>genepattern.org</groupId>
   <artifactId>visualizerLauncher</artifactId>
-  <version>1.2.3-SNAPSHOT</version>
+  <version>1.2.3</version>
   <name>VisualizerLauncher</name>
   <url>http://maven.apache.org</url>
   
