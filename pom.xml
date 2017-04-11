@@ -28,7 +28,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>genepattern.org</groupId>
   <artifactId>visualizerLauncher</artifactId>
-  <version>1.2.3</version>
+  <version>1.2.4-SNAPSHOT</version>
   <name>VisualizerLauncher</name>
   <url>http://maven.apache.org</url>
   
