@@ -201,21 +201,19 @@ public class VisualizerLauncher {
 
     private void retrievejobDetails() throws Exception
     {
-        if(jobInfo == null || jobInfo.getJobNumber() == null)
-        {
-            throw new IllegalArgumentException("No valid job found");
+        if(jobInfo == null || jobInfo.getJobNumber() == null) {
+            throw new IllegalArgumentException("jobId not set");
         }
         String getJobAPICall = gpServer + VisualizerLauncher.REST_API_JOB_PATH + "/" + jobInfo.getJobNumber();
         String response = Util.doGetRequest(basicAuthHeader, getJobAPICall);
+        log.trace(response);
 
         JSONTokener tokener = new JSONTokener(response);
         JSONObject root = new JSONObject(tokener);
 
         String taskLsid = root.getString("taskLsid");
-
-        if(taskLsid == null || taskLsid.length() == 0)
-        {
-            throw new Exception("Task lsid was not found");
+        if(taskLsid == null || taskLsid.length() == 0) {
+            throw new Exception("taskLsid not found");
         }
 
         GPTask gpTask = new GPTask();
@@ -299,14 +297,14 @@ public class VisualizerLauncher {
         gpTask.setCommandLine(commandLine);
     }
 
-    private void runVisualizer() throws  Exception
-    {
-        if(jobInfo == null || jobInfo.getGpTask() == null || jobInfo.getGpTask().getCommandLine() == null
-                || jobInfo.getGpTask().getCommandLine().length() == 0)
-        {
+    private void prepareCommandLine() throws IOException {
+        if (jobInfo == null 
+                || jobInfo.getGpTask() == null 
+                || jobInfo.getGpTask().getCommandLine() == null
+                || jobInfo.getGpTask().getCommandLine().length() == 0
+        ) {
             throw new IllegalArgumentException("No command line found");
         }
-
         String cmdLine = jobInfo.getGpTask().getCommandLine();
 
         //substitute <libdir> on the commandline with empty string since
@@ -345,7 +343,15 @@ public class VisualizerLauncher {
 
         log.info("running command " + Arrays.asList(cmdLineList));
         jobInfo.setCommandLine(cmdLineList);
-        Util.runCommand(jobInfo.getCommandLine());
+    }
+
+    private void runVisualizer() throws IOException {
+        try {
+            CommandUtil.runCommand(jobInfo.getCommandLine());
+        } 
+        catch (IOException e) {
+            log.error("Error running visualizer command: "+jobInfo.getCommandLine(), e);
+        }
     }
 
     protected void downloadInputFiles() throws Exception {
@@ -356,8 +362,12 @@ public class VisualizerLauncher {
         }
 
         // GET /gp/rest/v1/jobs/{jobId}/visualizerInputFiles{.json}
-        final String inputFilesJson =
-                getVisualizerInputFilesJson(basicAuthHeader, gpServer, jobInfo.getJobNumber());
+        final String inputFilesJson = 
+                Util.doGetRequest(basicAuthHeader, gpServer + REST_API_JOB_PATH  + "/" + jobInfo.getJobNumber() + "/visualizerInputFiles");
+        if (log.isTraceEnabled()) {
+            log.trace(inputFilesJson);
+        }
+
         final JSONObject inputFilesJsonObj=new JSONObject(inputFilesJson);
         final JSONArray inputFiles=inputFilesJsonObj.getJSONArray("inputFiles");
         final Map<String, String> map = new HashMap<String, String>();
@@ -387,50 +397,48 @@ public class VisualizerLauncher {
         return fileURL;
     }
 
-    protected static String getVisualizerInputFilesJson(final String basicAuth, final String gpServer, final String jobId)
-    throws Exception 
-    {
-        //get the URLs to the input files for the job
-        final String fromUrl = gpServer + REST_API_JOB_PATH  + "/" + jobId + "/visualizerInputFiles";
-        try {
-            return Util.doGetRequest(basicAuth, fromUrl);
-        }
-        catch (Throwable t) {
-            throw new Exception("Error in GET "+fromUrl+": "+t.getMessage());
-        }
+    private void handleExecError(final String prefix, Throwable t) {
+        String msg = prefix+": " + t.getLocalizedMessage();
+        log.error(msg, t);
+        statusMsgField.setText("");
+        displayMsg(msg, true);
+        
     }
 
     private void exec() {
+        String status="launching visualizer";
         try {
-            //retrieve the job details in order to get the task details
-            statusMsgField.setText("Retrieving job details...");
-            retrievejobDetails();
-
-            //retrieve the visualizer module details
-            statusMsgField.setText("Retrieving task details...");
+            status="retrieving job details";
+            log.info(status+" ...");
+            retrievejobDetails(); 
+            
+            status="retrieving task details";
+            log.info(status+" ...");
             retrieveTaskDetails();
 
-            //download the support files
-            statusMsgField.setText("Downloading support files...");
+            status="downloading support files";
+            log.info(status+" ...");
             downloadSupportFiles(jobInfo.getGpTask());
 
-            //download the input files
-            statusMsgField.setText("Downloading input files...");
+            status="downloading input files";
+            log.info(status+" ...");
             downloadInputFiles();
+            
+            status="preparing command line";
+            log.info(status+" ...");
+            prepareCommandLine();
 
-            //run the visualizer
-            statusMsgField.setText("Launching visualizer...");
+            status="launching visualizer";
+            log.info(status+" ...");
             runVisualizer();
         }
-        catch (Exception e) {
-            String msg = "An error occurred while running the visualizer: " + e.getLocalizedMessage();
-            log.error(msg, e);
-            statusMsgField.setText("");
-            displayMsg(msg, true);
+        catch (Throwable t) {
+            handleExecError("Error "+status, t);
+            return;
         }
     }
 
-    private void displayMsg(String msg, boolean isError) {
+    private void displayMsg(final String msg, final boolean isError) {
         JTextArea jta = new JTextArea(msg);
         @SuppressWarnings("serial")
         JScrollPane scrollPane = new JScrollPane(jta){

@@ -58,19 +58,24 @@ public class Util {
             if (!isNullOrEmpty(basicAuthHeader)) {
                 httpget.setHeader("Authorization", basicAuthHeader);
             }
-            log.debug("Executing request " + httpget.getRequestLine());
+            if (log.isDebugEnabled()) {
+                log.debug("Executing request " + httpget.getRequestLine());
+            }
 
             // Create a custom response handler
             final ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
                 @Override
-                public String handleResponse(final HttpResponse response) throws ClientProtocolException, IOException {
+                public String handleResponse(final HttpResponse response) throws ClientProtocolException, IOException { 
                     final int status = response.getStatusLine().getStatusCode();
+                    if (log.isDebugEnabled()) {
+                        log.debug("response: "+response.getStatusLine());
+                    }
                     if (status >= 200 && status < 300) {
                         final HttpEntity entity = response.getEntity();
                         return entity != null ? EntityUtils.toString(entity) : null;
                     } 
                     else {
-                        throw new ClientProtocolException("Unexpected response status: " + status);
+                        throw new ClientProtocolException(response.getStatusLine()+", "+fromUrl);
                     }
                 }
             };
@@ -88,17 +93,17 @@ public class Util {
      * @param dir, The directory to download the URL to.
      * @param filename, The filename to download the URL to.
      */
-    public static File downloadFile(String authString, URL url, File dir, String filename) throws IOException {
+    public static File downloadFile(String authString, URL fromUrl, File toDir, String filename) throws IOException {
         InputStream is = null;
         FileOutputStream fos = null;
         File file = null;
         try {
-            URLConnection conn = url.openConnection();
+            URLConnection conn = fromUrl.openConnection();
             conn.setRequestProperty("Authorization", authString);
 
             is = conn.getInputStream();
-            dir.mkdirs();
-            file = new File(dir, filename);
+            toDir.mkdirs();
+            file = new File(toDir, filename);
             fos = new FileOutputStream(file);
             byte[] buf = new byte[100000];
             int j;
@@ -107,7 +112,7 @@ public class Util {
             }
         }
         catch (IOException e) {
-            e.printStackTrace();
+            log.error(e);
             throw e;
         }
         finally {
