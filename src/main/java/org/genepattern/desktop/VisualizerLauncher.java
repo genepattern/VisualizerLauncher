@@ -199,23 +199,8 @@ public class VisualizerLauncher {
         }
     }
 
-    private void retrievejobDetails() throws Exception
-    {
-        if(jobInfo == null || jobInfo.getJobNumber() == null) {
-            throw new IllegalArgumentException("jobId not set");
-        }
-        String getJobAPICall = gpServer + VisualizerLauncher.REST_API_JOB_PATH + "/" + jobInfo.getJobNumber();
-        String response = Util.doGetRequest(basicAuthHeader, getJobAPICall);
-        log.trace(response);
-
-        JSONTokener tokener = new JSONTokener(response);
-        JSONObject root = new JSONObject(tokener);
-
-        String taskLsid = root.getString("taskLsid");
-        if(taskLsid == null || taskLsid.length() == 0) {
-            throw new Exception("taskLsid not found");
-        }
-
+    private void retrieveJobDetails(final String jobId) throws Exception {
+        final String taskLsid=Util.retrieveJobDetails(basicAuthHeader, gpServer, jobId); 
         GPTask gpTask = new GPTask();
         gpTask.setLsid(taskLsid);
         jobInfo.setGpTask(gpTask);
@@ -406,10 +391,14 @@ public class VisualizerLauncher {
     private void exec() {
         String status="launching visualizer";
         try {
+            status="validating input";
+            if (jobInfo == null || jobInfo.getJobNumber() == null) {
+                throw new IllegalArgumentException("jobId not set");
+            }
             status="retrieving job details";
             log.info(status+" ...");
-            retrievejobDetails(); 
-            
+            retrieveJobDetails(jobInfo.getJobNumber());
+
             status="retrieving task details";
             log.info(status+" ...");
             retrieveTaskDetails();
