@@ -4,4 +4,4 @@ Launch a GenePattern visualizer from the desktop. Use this instead of the 'Open 
 
 ### Support or Contact
 
-Having trouble with the Visualizer Launcher? Check out our [genepattern.org](https://genepattern.org/) or [our blog](http://software.broadinstitute.org/cancer/software/genepattern/blog).
+Having trouble with the Visualizer Launcher? Check out [genepattern.org](https://genepattern.org/) or our [blog](http://software.broadinstitute.org/cancer/software/genepattern/blog).
