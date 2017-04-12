@@ -278,7 +278,10 @@
       ==================================================
           maven-clean-plugin
       ==================================================
-      Cleanup additional files, by default only the target directory is deleted.
+      Cleanup additional files which are created when you run the application
+        ./logs
+        ./visualizerLauncher 
+      By default only the target directory is deleted.
       See: 
         https://maven.apache.org/plugins/maven-clean-plugin/
     -->
@@ -289,21 +292,11 @@
           <filesets>
             <fileset>
               <followSymlinks>false</followSymlinks>
-              <!-- these two directories are created when you run the application -->
               <directory>visualizerLauncher</directory>
+            </fileset>
+            <fileset>
+              <followSymlinks>false</followSymlinks>
               <directory>logs</directory>
-              <!-- example includes 
-              <includes>
-                <include>**/*.tmp</include>
-                <include>**/*.log</include>
-              </includes>
-              -->
-              <!-- example excludes 
-              <excludes>
-                <exclude>**/important.log</exclude>
-                <exclude>**/another-important.log</exclude>
-              </excludes>
-              -->
             </fileset>
           </filesets>
         </configuration>
