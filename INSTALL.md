@@ -1,3 +1,22 @@
+## Usage
+     # run visualizer launcher (for debugging, testing)
+      mvn -q clean package exec:java
+      # create single jar application
+      mvn clean compile assembly:single 
+      # create Mac OS X application bundle
+      mvn package appbundle:bundle
+      
+      # run visualizer launcher with the java command
+      java -jar launcher/${jarName}-full.jar
+      
+      
+      # use a different certificate ...
+      mvn -Dsignjar.keystore=${HOME}/.gp_build/genepattern-codesign.jks
+        -Dsignjar.alias=codesign
+        -Dsignjar.storepass=....
+        
+
+
 ## Building from source
 Use **mvn** to build the project with the defaultGoal "package" 
 
@@ -5,20 +24,17 @@ Use **mvn** to build the project with the defaultGoal "package"
     (equivalently) mvn package
     
 This creates packages in the ./target directory.
-* (java executable) VisualizerLauncher-{version}-SNAPSHOT-r{build.number}-jar-with-dependencies.jar 
-* (Mac OS X app)    VisualizerLauncher-{version}-SNAPSHOT-r{build.number}/VisualizerLauncher.app
+* (java executable) visualizerLauncher-{version}-full.jar 
+* (Mac OS X app)    visualizerLauncher-{version}/VisualizerLauncher.app
 
 To run as a jar executable
 
-    mvn -q clean package exec:exec
-
-To run on Mac OS X
-
-    open target/VisualizerLauncher-{version}-SNAPSHOT-{build.number}/VisualizerLauncher.app
+    mvn -q clean package exec:java
 
 For more details ... consult the pom.xml file 
 
-    mvn help
+    mvn --help
+    mvn help:help -Ddetail=true
 
 ## VisualizerLauncher
 Launches a GenePattern visualizer from the desktop. Use this as a replacement for the 'Open Visualizer' link embedded in the web page. 
