@@ -2,55 +2,33 @@
 * [Apache Maven](https://maven.apache.org/), make sure you have the mvn command on your path.
 
 ## Running ...
-Run the visualizer launcher (for debugging, testing)
+To run as a jar executable from a clean build
+
     mvn -q clean package exec:java
 
 ## Building from source
-Additional `mvn` commands. Create single jar application
-    mvn clean compile assembly:single 
-Create Mac OS X application bundle
-    mvn package appbundle:bundle
-Run visualizer launcher with the java command
-    java -jar launcher/${jarName}-full.jar  
-Use a different certificate ...
+Use **mvn** to build the project with the defaultGoal "package".
+
+    mvn
+    (equivalently) mvn package
+
+This creates packages in the ./target directory.
+* (signed java executable) visualizerLauncher-{version}-full.jar 
+* (unsigned Mac OS X app)  visualizerLauncher-{version}/VisualizerLauncher.app
+
+To run the visualizer launcher with the java command
+
+    java -jar target/visualizerLauncher-{version}-full.jar
+
+During the package phase the maven-jarsigner-plugin signs the jar file, the shade plugin creates an executable jar file, and the appbundle plugin creates the Mac OS X application bundler.
+
+To use a different certificate ...
+
     mvn -Dsignjar.keystore=${HOME}/.gp_build/genepattern-codesign.jks
         -Dsignjar.alias=codesign
         -Dsignjar.storepass=....
 
-See the [pom.xml](pom.xml) file for details.
-
-## Building from source
-Use **mvn** to build the project with the defaultGoal "package" 
-
-    mvn
-    (equivalently) mvn package
-    
-This creates packages in the ./target directory.
-* (java executable) visualizerLauncher-{version}-full.jar 
-* (Mac OS X app)    visualizerLauncher-{version}/VisualizerLauncher.app
-
-To run as a jar executable
-
-    mvn -q clean package exec:java
-
-For more details ... consult the pom.xml file 
+For more details ... consult the [pom.xml](pom.xml) file 
 
     mvn --help
     mvn help:help -Ddetail=true
-
-## VisualizerLauncher
-Launches a GenePattern visualizer from the desktop. Use this as a replacement for the 'Open Visualizer' link embedded in the web page. 
-
-#### To get started ...
-The application is available for download directly from the [releases](https://github.com/genepattern/VisualizerLauncher/releases/latest) page. 
-
-**Mac OS X:** Download the native .app.zip file; Unzip and double-click the app.
-
-**Other java:** Download the jar file. From a Terminal window
-
-    java -jar visualizerLauncher.jar
-    
-#### Launching your visualizer ...
-The VisualizerLauncher opens in a new application window. If for some reason it is hidden, look for the "VisualizerLauncher" java application icon in your dock. Enter the server, (e.g. http(s)://genepattern.broadinstitute.org/gp), your username, password, and the job number of your visualizer job. Click 'Submit'. The launcher will connect to the server, download the required application and data files, and launch the visualizer as a new window.
-
-#### Building from source
