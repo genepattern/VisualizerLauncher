@@ -1,21 +1,23 @@
-## Usage
-     # run visualizer launcher (for debugging, testing)
-      mvn -q clean package exec:java
-      # create single jar application
-      mvn clean compile assembly:single 
-      # create Mac OS X application bundle
-      mvn package appbundle:bundle
-      
-      # run visualizer launcher with the java command
-      java -jar launcher/${jarName}-full.jar
-      
-      
-      # use a different certificate ...
-      mvn -Dsignjar.keystore=${HOME}/.gp_build/genepattern-codesign.jks
+## Prerequisites
+* [Apache Maven](https://maven.apache.org/), make sure you have the mvn command on your path.
+
+## Running ...
+Run the visualizer launcher (for debugging, testing)
+    mvn -q clean package exec:java
+
+## Building from source
+Additional `mvn` commands. Create single jar application
+    mvn clean compile assembly:single 
+Create Mac OS X application bundle
+    mvn package appbundle:bundle
+Run visualizer launcher with the java command
+    java -jar launcher/${jarName}-full.jar  
+Use a different certificate ...
+    mvn -Dsignjar.keystore=${HOME}/.gp_build/genepattern-codesign.jks
         -Dsignjar.alias=codesign
         -Dsignjar.storepass=....
-        
 
+See the [pom.xml](pom.xml) file for details.
 
 ## Building from source
 Use **mvn** to build the project with the defaultGoal "package" 
