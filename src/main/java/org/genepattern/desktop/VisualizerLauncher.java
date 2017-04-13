@@ -444,9 +444,16 @@ public class VisualizerLauncher {
                 null, scrollPane, type, JOptionPane.ERROR_MESSAGE);
     }
 
-    public static void main(String[] args)
-    {
+    private static void createAndShowGUI() {
         VisualizerLauncher dsLauncher = new VisualizerLauncher();
         dsLauncher.run();
+    }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                createAndShowGUI();
+            }
+        });
     }
 }
