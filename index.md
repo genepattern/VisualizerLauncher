@@ -4,6 +4,7 @@ Launch a GenePattern visualizer from the desktop. Use this instead of the 'Open 
 
 ### To get started ... 
 **\[Mac OS X\]** Download [VisualizerLauncher.app.zip](https://github.com/genepattern/VisualizerLauncher/releases/download/v1.2.4/VisualizerLauncher.app.zip), unzip, and open the app.
+
 **\[Other java\]** Download [visualizerLauncher.jar](https://github.com/genepattern/VisualizerLauncher/releases/download/v1.2.4/visualizerLauncher-1.2.4.jar) and double-click the jar file.
 
 ### Launching a visualizer ...
