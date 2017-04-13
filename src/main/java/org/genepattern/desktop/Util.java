@@ -21,12 +21,14 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Created by nazaire on 4/6/16.
  */
 public class Util {
-    final static private Logger log = LogManager.getLogger(Util.class);
+    private static final Logger log = LogManager.getLogger(Util.class);
     
     public static boolean isNullOrEmpty(final String str) {
         return (str==null || str.length()==0);
@@ -84,6 +86,19 @@ public class Util {
         finally {
             httpClient.close();
         }
+    }
+
+    protected static String retrieveJobDetails(final String basicAuthHeader, final String gpServer, final String jobId) 
+    throws Exception, JSONException {
+        final String response = Util.doGetRequest(basicAuthHeader, 
+            gpServer + VisualizerLauncher.REST_API_JOB_PATH + "/" + jobId);
+        log.trace(response);
+        final JSONObject root = new JSONObject(response);
+        final String taskLsid = root.getString("taskLsid");
+        if(taskLsid == null || taskLsid.length() == 0) {
+            throw new Exception("taskLsid not found");
+        }
+        return taskLsid;
     }
 
     /**
