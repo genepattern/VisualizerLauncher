@@ -8,6 +8,8 @@ Launch a GenePattern visualizer from the desktop. Use this instead of the 'Open 
 **\[Other java\]** Download [visualizerLauncher.jar](https://github.com/genepattern/VisualizerLauncher/releases/download/v1.2.4/visualizerLauncher-1.2.4.jar) and double-click the jar file.
 
 ### Launching a visualizer ...
+Run the visualizer of interest in GenePattern, as you normally would. Once the Job Status page displays, and the visualizer fails to launch in your browser, you will now have the _job number_ to provide to the app.
+
 After opening the app (either by double clicking or opening - see above for OS specific instructions), the VisualizerLauncher opens in a new application window.
 You will then need to enter the following information...
 * server, e.g. `https://genepattern.broadinstitute.org/gp` (this can be copied from the URL bar in your browser)
