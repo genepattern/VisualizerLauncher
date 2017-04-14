@@ -8,8 +8,9 @@ Launch a GenePattern visualizer from the desktop. Use this instead of the 'Open 
 **\[Other java\]** Download [visualizerLauncher.jar](https://github.com/genepattern/VisualizerLauncher/releases/download/v1.2.4/visualizerLauncher-1.2.4.jar) and double-click the jar file.
 
 ### Launching a visualizer ...
-The VisualizerLauncher opens in a new application window. If for some reason it is hidden, look for the "VisualizerLauncher" java application icon in your dock. Enter ...
-* server, e.g. `https://genepattern.broadinstitute.org/gp`
+After opening the app (either by double clicking or opening - see above for OS specific instructions), the VisualizerLauncher opens in a new application window.
+You will then need to enter the following information...
+* server, e.g. `https://genepattern.broadinstitute.org/gp` (this can be copied from the URL bar in your browser)
 * _your genepattern username_
 * _your genepattern password_
 * _the job number of your visualizer job_
@@ -23,4 +24,4 @@ java -jar visualizerLauncher-1.2.4.jar
 
 ### Support or Contact
 
-Having trouble with the Visualizer Launcher? Check out [genepattern.org](https://genepattern.org/) or our [blog](http://software.broadinstitute.org/cancer/software/genepattern/blog).
+Having trouble with the Visualizer Launcher? Check out our [blog](http://software.broadinstitute.org/cancer/software/genepattern/blog/2017/03/16/java-applet-based-visualizers-no-longer-function-in-any-browser) or [contact us](http://software.broadinstitute.org/cancer/software/genepattern/contact)
