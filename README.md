@@ -1,6 +1,15 @@
 ## VisualizerLauncher
-Launches a GenePattern visualizer from the desktop. Use this as a replacement for the 'Open Visualizer' link embedded in the web page. The application is available for download directly from the [releases](https://github.com/genepattern/VisualizerLauncher/releases/latest) page. 
 
-See the [INSTALL page](INSTALL.md) for instructions on building the application.
+Launch a GenePattern visualizer from the desktop. Use this as a replacement for the 'Open Visualizer' link on the Job Status page.
 
-See the [home page](https://genepattern.github.io/VisualizerLauncher/) for more usage instructions.
+### Launch visualizer ...
+
+See the [home page](https://genepattern.github.io/VisualizerLauncher/) for usage instructions.
+
+### Developer documentation
+
+See the [BUILD page](BUILD.md) for instructions on building the application from source code.
+
+### Release archive
+
+See the [releases page](https://github.com/genepattern/VisualizerLauncher/releases/latest) for release notes and older versions.
