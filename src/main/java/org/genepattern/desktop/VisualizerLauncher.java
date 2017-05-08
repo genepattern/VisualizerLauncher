@@ -64,7 +64,7 @@ public class VisualizerLauncher {
         this.jobInfo = new JobInfo();
     }
 
-    private void login() {
+    private void run() {
         JPanel panel = new JPanel(new GridLayout(4, 1));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
@@ -180,10 +180,6 @@ public class VisualizerLauncher {
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         frame.setLocation((screenSize.width - frame.getWidth()) / 2, (screenSize.height - frame.getHeight()) / 2);
         frame.setVisible(true);
-    }
-
-    public void run() {
-        login();
     }
 
     private void downloadSupportFiles(final GPTask task) throws Exception {
@@ -317,6 +313,10 @@ public class VisualizerLauncher {
         final String[] cmdLineList = new String[cmdLineArr.length()];
         for(int i=0;i< cmdLineArr.length(); i++) {
             String argValue = cmdLineArr.getString(i);
+            if (argValue.startsWith("/gp/")) {
+                // e.g. gpServer=http://127.0.0.1:8080/gp
+                argValue=argValue.replaceFirst("/gp", gpServer);
+            }
             if(inputURLMap.containsKey(argValue)) {
                 argValue = downloadLocation.getAbsolutePath() + "/" + inputURLMap.get(argValue);
             }
@@ -355,15 +355,26 @@ public class VisualizerLauncher {
         final JSONArray inputFiles=inputFilesJsonObj.getJSONArray("inputFiles");
         final Map<String, String> map = new HashMap<String, String>();
         for(int i=0;i<inputFiles.length();i++) {
-            String inputFile = inputFiles.getString(i);
-            if (inputFile.startsWith("<GenePatternURL>")) {
-                inputFile=inputFile.replaceFirst("<GenePatternURL>", gpServer+"/");
-            }
-            final String filenameWithExtension=filenameWithExt(inputFile);
-            final URL fileURL = downloadInputFile(inputFile);
+            final String inputFile = inputFiles.getString(i);
+            final String inputFileUrlStr=initInputFileUrlStr(inputFile);
+            final String filenameWithExtension=filenameWithExt(inputFileUrlStr);
+            final URL fileURL = downloadInputFile(inputFileUrlStr);
             map.put(fileURL.toString(), filenameWithExtension);
         }
         jobInfo.setInputURLToFilePathMap(map);
+    }
+
+    protected String initInputFileUrlStr(final String inputFile) {
+        if (inputFile.startsWith("<GenePatternURL>")) {
+            return inputFile.replaceFirst("<GenePatternURL>", gpServer+"/");
+        }
+        else if (inputFile.startsWith("/gp/")) {
+            // e.g. gpServer=http://127.0.0.1:8080/gp
+            return inputFile.replaceFirst("/gp", gpServer);
+        }
+        else {
+            return inputFile;
+        }
     }
 
     protected String filenameWithExt(final String inputFile) {
