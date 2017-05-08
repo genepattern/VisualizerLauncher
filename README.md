@@ -1,8 +1,6 @@
 ## VisualizerLauncher
 
-Launch a GenePattern visualizer from the desktop. Use this as a replacement for the 'Open Visualizer' link on the Job Status page.
-
-### Launch visualizer ...
+Launch a GenePattern visualizer from the desktop. Use this as a replacement for the 'Open Visualizer' link on the Job Status page. 
 
 See the [home page](https://genepattern.github.io/VisualizerLauncher/) for usage instructions.
 
