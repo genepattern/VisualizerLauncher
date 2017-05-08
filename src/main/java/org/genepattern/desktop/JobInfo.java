@@ -10,7 +10,7 @@ public class JobInfo
     private String jobNumber;
     private GPTask gpTask;
     private String[] commandLine;
-    private Map inputURLToFilePathMap;
+    private Map<String,String> inputURLToFilePathMap;
 
     public String getJobNumber() {
         return jobNumber;
@@ -40,7 +40,7 @@ public class JobInfo
         return inputURLToFilePathMap;
     }
 
-    public void setInputURLToFilePathMap(Map inputURLToFilePathMap) {
+    public void setInputURLToFilePathMap(Map<String,String> inputURLToFilePathMap) {
         this.inputURLToFilePathMap = inputURLToFilePathMap;
     }
 }

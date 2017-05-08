@@ -108,18 +108,18 @@ public class Util {
      * @param dir, The directory to download the URL to.
      * @param filename, The filename to download the URL to.
      */
-    public static File downloadFile(String authString, URL fromUrl, File toDir, String filename) throws IOException {
+    public static File downloadFile(final String authString, final URL fromUrl, final File toDir, final String filename) throws IOException {
         InputStream is = null;
         FileOutputStream fos = null;
-        File file = null;
+        File toFile = null;
         try {
             URLConnection conn = fromUrl.openConnection();
             conn.setRequestProperty("Authorization", authString);
 
             is = conn.getInputStream();
             toDir.mkdirs();
-            file = new File(toDir, filename);
-            fos = new FileOutputStream(file);
+            toFile = new File(toDir, filename);
+            fos = new FileOutputStream(toFile);
             byte[] buf = new byte[100000];
             int j;
             while ((j = is.read(buf, 0, buf.length)) != -1) {
@@ -136,6 +136,7 @@ public class Util {
                     is.close();
                 }
                 catch (IOException e) {
+                    log.error("Unexpected error closing input stream, fromUrl="+fromUrl, e);
                 }
             }
             if (fos != null) {
@@ -143,10 +144,11 @@ public class Util {
                     fos.close();
                 }
                 catch (IOException e) {
+                    log.error("Unexpected error closing output stream, toFile="+toFile, e);
                 }
             }
         }
-        return file;
+        return toFile;
     }
     
     /** create thread to read from a process output or error stream */
