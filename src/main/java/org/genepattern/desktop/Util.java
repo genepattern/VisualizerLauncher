@@ -1,14 +1,10 @@
 package org.genepattern.desktop;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.net.URL;
-import java.net.URLConnection;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpEntity;
@@ -101,56 +97,6 @@ public class Util {
         return taskLsid;
     }
 
-    /**
-     * Download a URL to a local file and return a File object for it.
-     *
-     * @param url, The url to download.
-     * @param dir, The directory to download the URL to.
-     * @param filename, The filename to download the URL to.
-     */
-    public static File downloadFile(final String authString, final URL fromUrl, final File toDir, final String filename) throws IOException {
-        InputStream is = null;
-        FileOutputStream fos = null;
-        File toFile = null;
-        try {
-            URLConnection conn = fromUrl.openConnection();
-            conn.setRequestProperty("Authorization", authString);
-
-            is = conn.getInputStream();
-            toDir.mkdirs();
-            toFile = new File(toDir, filename);
-            fos = new FileOutputStream(toFile);
-            byte[] buf = new byte[100000];
-            int j;
-            while ((j = is.read(buf, 0, buf.length)) != -1) {
-                fos.write(buf, 0, j);
-            }
-        }
-        catch (IOException e) {
-            log.error(e);
-            throw e;
-        }
-        finally {
-            if (is != null) {
-                try {
-                    is.close();
-                }
-                catch (IOException e) {
-                    log.error("Unexpected error closing input stream, fromUrl="+fromUrl, e);
-                }
-            }
-            if (fos != null) {
-                try {
-                    fos.close();
-                }
-                catch (IOException e) {
-                    log.error("Unexpected error closing output stream, toFile="+toFile, e);
-                }
-            }
-        }
-        return toFile;
-    }
-    
     /** create thread to read from a process output or error stream */
     protected static final Thread copyStream(final InputStream is, final PrintStream out) {
         Thread copyThread = new Thread(new Runnable() {

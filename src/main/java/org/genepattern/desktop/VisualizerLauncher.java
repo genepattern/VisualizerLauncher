@@ -30,9 +30,13 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -137,16 +141,13 @@ public class VisualizerLauncher {
                 jobInfo = new JobInfo();
                 jobInfo.setJobNumber(jobNumber);
 
-                String topLevelOuput = "visualizerLauncher";
-                String outputDir = "GenePattern_" + jobNumber;
-
                 gpServer = serverName;
                 if (serverName.endsWith("/")) {
                     // remove trailing slash
                     gpServer = serverName.substring(0, serverName.length()-1);
                 }
 
-                downloadLocation = new File(topLevelOuput, outputDir);
+                downloadLocation = FileUtil.getDownloadLocation(jobNumber);
 
                 //setup location of log files
                 String vizDirName = "visualizerLauncher";
@@ -187,7 +188,7 @@ public class VisualizerLauncher {
             final int slashIndex = supportFileURL.lastIndexOf('=');
             final String filenameWithExtension =  supportFileURL.substring(slashIndex + 1);
             try {
-                Util.downloadFile(basicAuthHeader, new URL(supportFileURL), downloadLocation, filenameWithExtension);
+                FileUtil.downloadFile(basicAuthHeader, new URL(supportFileURL), downloadLocation, filenameWithExtension);
             }
             catch (Throwable t) {
                 throw new Exception("Error downloading support file: '"+supportFileURL+"'"+t.getMessage());
@@ -278,6 +279,30 @@ public class VisualizerLauncher {
         gpTask.setCommandLine(commandLine);
     }
 
+    protected static boolean isNullOrEmpty(final String str) {
+        return str==null || str.length()==0;
+    }
+    
+    /** helper method: surround each space-delimited token in double quotes */
+    protected static String wrapTokensInQuotes(final String cmdLineIn) {
+        String cmdLine="";
+        String[] args=cmdLineIn.split(" ");
+        for(final String argIn : args) {
+            if (!isNullOrEmpty(argIn)) {
+                // wrap everything in double quotes
+                final String arg = "\"" + argIn + "\" ";
+                cmdLine=cmdLine+arg;
+            }
+        }
+        // strip trailing " "
+        cmdLine=cmdLine.substring(0, cmdLine.length()-1);
+        return cmdLine;
+    }
+    
+    protected static String wrapInQuotes(final String arg) {
+        return "\"" + arg + "\"";
+    }
+
     private void prepareCommandLineStep() throws IOException {
         if (jobInfo == null 
                 || jobInfo.getGpTask() == null 
@@ -287,17 +312,17 @@ public class VisualizerLauncher {
             throw new IllegalArgumentException("No command line found");
         }
         String cmdLine = jobInfo.getGpTask().getCommandLine();
-
+        //wrap args in double quotes
+        cmdLine = wrapTokensInQuotes(cmdLine);
         //substitute <libdir> with the downloadLocation (aka local libdir)
         cmdLine = cmdLine.replace("<libdir>", downloadLocation.getAbsolutePath() + "/");
         //substitute <path.separator> on local VM, not necessarily the same as server 
         cmdLine = cmdLine.replace("<path.separator>", File.pathSeparator);
-
         //substitute <java> 
         String java = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
         //add .exe extension if this is Windows
         java += (System.getProperty("os.name").startsWith("Windows") ? ".exe" : "");
-        cmdLine = cmdLine.replace("<java>", "\"" + java + "\"");
+        cmdLine = cmdLine.replace("<java>", java);
 
         //get the substituted commandline from the serverField
         final String getTaskRESTCall = 
@@ -387,7 +412,7 @@ public class VisualizerLauncher {
             throws MalformedURLException, IOException {
         final String filenameWithExtension=filenameWithExt(inputFile);
         final URL fileURL = new URL(inputFile);
-        Util.downloadFile(basicAuthHeader, fileURL, downloadLocation, filenameWithExtension);
+        FileUtil.downloadFile(basicAuthHeader, fileURL, downloadLocation, filenameWithExtension);
         return fileURL;
     }
 
@@ -395,17 +420,19 @@ public class VisualizerLauncher {
         String msg = prefix+": " + t.getLocalizedMessage();
         log.error(msg, t);
         statusMsgField.setText("");
-        displayMsg(msg, true);
-        
+        displayMsg(msg, true); 
     }
 
     private void exec() {
         String status="launching visualizer";
         try {
+            log.info(status+" ...");
+            log.info("     java.version: " + System.getProperty("java.version"));
             status="validating input";
             if (jobInfo == null || jobInfo.getJobNumber() == null) {
                 throw new IllegalArgumentException("jobId not set");
             }
+            log.info("     job number: " + jobInfo.getJobNumber());
             status="retrieving job details";
             log.info(status+" ...");
             retrieveJobDetails(jobInfo.getJobNumber());
@@ -458,6 +485,14 @@ public class VisualizerLauncher {
     private static void createAndShowGUI() {
         VisualizerLauncher dsLauncher = new VisualizerLauncher();
         dsLauncher.run();
+    }
+
+    protected static void setDebugMode() {
+        LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+        Configuration config = ctx.getConfiguration();
+        LoggerConfig loggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME); 
+        loggerConfig.setLevel(Level.DEBUG);
+        ctx.updateLoggers();
     }
 
     public static void main(String[] args) {
