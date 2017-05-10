@@ -37,16 +37,36 @@ public class FileUtil {
      * @param filename, The filename to download the URL to.
      */
     public static File downloadFile(final String authString, final URL fromUrl, final File toDir, final String filename) throws IOException {
+        final File toFile=new File(toDir, filename);
+        return downloadFile(authString, fromUrl, toFile);
+    }
+
+    /**
+     * Download a URL to a local file, mkdirs if necessary.
+     * 
+     * @param authString
+     * @param fromUrl, the url to download
+     * @param toFile, the local path to the file
+     */
+    public static File downloadFile(final String authString, final URL fromUrl, final File toFile) throws IOException {
         InputStream is = null;
         FileOutputStream fos = null;
-        File toFile = null;
         try {
+            final File toDir=toFile.getParentFile();
+            if (!toDir.exists()) {
+                boolean created=toDir.mkdirs();
+                if (log.isInfoEnabled()) {
+                    if (created) {
+                        log.info("     created directory: "+toDir);
+                    }
+                    else {
+                        log.warn("     failed to create directory: "+toDir);
+                    }
+                }
+            }
             URLConnection conn = fromUrl.openConnection();
             conn.setRequestProperty("Authorization", authString);
-    
             is = conn.getInputStream();
-            toDir.mkdirs();
-            toFile = new File(toDir, filename);
             fos = new FileOutputStream(toFile);
             byte[] buf = new byte[100000];
             int j;

@@ -6,6 +6,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -15,7 +17,8 @@ import org.json.JSONObject;
  *
  */
 public class TaskInfo {
-    
+    private static final Logger log = LogManager.getLogger(TaskInfo.class);
+
     protected static JSONObject getTaskJson(final GpServerInfo info, final String taskLsid) 
     throws IOException {
         final String getTaskRESTCall = 
@@ -76,15 +79,45 @@ public class TaskInfo {
         return commandLine;
     }
 
+    protected boolean checkCache=true;
+    
+    protected String extractFilename(final String supportFileUrl) {
+        final int slashIndex = supportFileUrl.lastIndexOf('=');
+        final String filename =  supportFileUrl.substring(slashIndex + 1);
+        return filename;
+    }
+
     public void downloadSupportFiles(final GpServerInfo info) throws Exception {
-        for(final String supportFileUrl : supportFileUrls) {
-            final int slashIndex = supportFileUrl.lastIndexOf('=');
-            final String filenameWithExtension =  supportFileUrl.substring(slashIndex + 1);
+        if (supportFileUrls==null) {
+            log.error("supportFileUrls not set");
+            return;
+        }
+        if (supportFileUrls.size()==0) {
+            log.warn("supportFileUrls.size==0");
+            return;
+        }
+        if (log.isInfoEnabled()) {
+            final String fromUrl=supportFileUrls.get(0);
+            final String filename=extractFilename(fromUrl);
+            final String baseUrl = fromUrl.substring(0, fromUrl.length() - filename.length());
+            log.info("     from baseUrl: "+baseUrl);
+            log.info("     to libdir:    "+libdir);
+        }
+
+        for(final String fromUrl : supportFileUrls) {
             try {
-                FileUtil.downloadFile(info.getBasicAuthHeader(), new URL(supportFileUrl), libdir, filenameWithExtension);
+                final String filename = extractFilename(fromUrl);
+                final File toFile=new File(libdir, filename);
+                if (checkCache && toFile.exists()) {
+                    log.info("     (cached) '"+filename+"'");
+                }
+                else {
+                    log.info("     downloading '"+filename+"' ...");
+                    FileUtil.downloadFile(info.getBasicAuthHeader(), new URL(fromUrl), toFile);
+                }
             }
             catch (Throwable t) {
-                throw new Exception("Error downloading support file: '"+supportFileUrl+"'"+t.getMessage());
+                throw new Exception("Error downloading support file: '"+fromUrl+"'"+t.getMessage());
             }
         }
     }
