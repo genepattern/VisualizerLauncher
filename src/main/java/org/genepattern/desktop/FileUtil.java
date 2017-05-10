@@ -80,44 +80,38 @@ public class FileUtil {
     }
 
     public static File getDownloadLocation(final String jobNumber) {
-        return getDownloadLocation_appDir(jobNumber);
+        final File appDir=getAppDir();
+        return new File(appDir, "GenePattern_" + jobNumber);
     }
     
-    public static File getDownloadLocation_default(final String jobNumber) {
-        final String topLevelOuput = "visualizerLauncher";
-        final String outputDir = "GenePattern_" + jobNumber;
-        final File file = new File(topLevelOuput, outputDir);
-        return file;
+    public static File getAppDir() {
+        return getAppDir_standard();
     }
     
-    /*
-     * Get the download location relative to the user.home directory:
-     *     <user.home>/Library/visualizerLauncher/GenePattern_<jobNumber>
-     */
-    public static File getDownloadLocation_userHome(final String jobNumber) {
-        final File home_dir=new File(System.getProperty("user.home"));
-        final File user_data_dir=new File(home_dir, "Library/visualizerLauncher");
-        final String outputDir = "GenePattern_" + jobNumber;
-        final File file = new File(user_data_dir, outputDir);
-        return file;
-    }
-
     /**
      * Get the download location using the AppDirs API.
      * @param jobNumber
      * @return
      */
-    public static File getDownloadLocation_appDir(final String jobNumber) {
+    protected static File getAppDir_standard() {
         final AppDirs appDirs = AppDirsFactory.getInstance();
         final String appName="VisualizerLauncher";
         final String appVersion="";
         final String appAuthor="GenePattern";
-        final File appDir=new File(appDirs.getUserDataDir(appName, appVersion, appAuthor));
-        
-        //final String topLevelOuput = "visualizerLauncher";
-        final String outputDir = "GenePattern_" + jobNumber;
-        final File file = new File(appDir, outputDir);
-        return file;
+        return new File(appDirs.getUserDataDir(appName, appVersion, appAuthor));
+    }
+
+    protected static File getAppDir_working_dir(final String jobNumber) {
+        return new File("visualizerLauncher");
+    }
+
+    /**
+     * Get the download location relative to the user.home directory:
+     *     <user.home>/Library/visualizerLauncher/GenePattern_<jobNumber>
+     */
+    protected static File getAppDir_user_home(final String jobNumber) {
+        final File home_dir=new File(System.getProperty("user.home"));
+        return new File(home_dir, "Library/visualizerLauncher");
     }
 
 }
