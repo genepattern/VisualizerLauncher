@@ -7,15 +7,10 @@ import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -37,9 +32,6 @@ import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.json.JSONTokener;
 
 /**
  * Created by nazaire on 4/3/16.
@@ -48,11 +40,6 @@ public class VisualizerLauncher {
     private static final Logger log = LogManager.getLogger(VisualizerLauncher.class);
     
     public static final String GP_URL_DEFAULT = "https://genepattern.broadinstitute.org/gp";
-    public static final String REST_API_JOB_PATH  = "/rest/v1/jobs";
-    public static final String REST_API_TASK_PATH = "/rest/v1/tasks";
-
-    private File downloadLocation;
-    private File libdir;
 
     private JFrame frame;
     private JTextField serverField;
@@ -117,7 +104,7 @@ public class VisualizerLauncher {
                     return;
                 }
 
-                if(Util.isNullOrEmpty(jobNumber)) {
+                if (Util.isNullOrEmpty(jobNumber)) {
                     displayMsg("Please enter a job number", true);
                     statusMsgField.setText("");
                     return;
@@ -134,17 +121,14 @@ public class VisualizerLauncher {
                 }
                 
                 VisualizerLauncher.this.info=new GpServerInfo.Builder()
-                        .gpServer(serverName)
-                        .user(userName)
-                        .pass(String.valueOf(password))
-                        .jobNumber(jobNumber)
-                    .build();
-
-                downloadLocation = FileUtil.getDownloadLocation(jobNumber);
+                    .gpServer(serverName)
+                    .user(userName)
+                    .pass(String.valueOf(password))
+                    .jobNumber(jobNumber)
+                .build();
 
                 //setup location of log files
-                String vizDirName = "visualizerLauncher";
-                ThreadContext.put("logFileDir", vizDirName);
+                ThreadContext.put("logFileDir", "visualizerLauncher");
                 ThreadContext.put("logFileName", "output");
 
                 exec();
@@ -194,72 +178,6 @@ public class VisualizerLauncher {
 
     }
 
-    /** helper method: surround each space-delimited token in double quotes */
-    protected static String wrapTokensInQuotes(final String cmdLineIn) {
-        String cmdLine="";
-        String[] args=cmdLineIn.split(" ");
-        for(final String argIn : args) {
-            if (!Util.isNullOrEmpty(argIn)) {
-                // wrap everything in double quotes
-                final String arg = "\"" + argIn + "\" ";
-                cmdLine=cmdLine+arg;
-            }
-        }
-        // strip trailing " "
-        cmdLine=cmdLine.substring(0, cmdLine.length()-1);
-        return cmdLine;
-    }
-    
-    protected static String wrapInQuotes(final String arg) {
-        return "\"" + arg + "\"";
-    }
-
-    private String[] prepareCommandLineStep(final Map<String, String> inputURLMap, final String commandLine) throws IOException {
-        if (commandLine==null) {
-            throw new IllegalArgumentException("commandLine==null");
-        }
-        if (inputURLMap==null) {
-            throw new IllegalArgumentException("inputURLMap==null");
-        }
-        //wrap args in double quotes
-        String cmdLine = wrapTokensInQuotes(commandLine);
-        //substitute <libdir> with the downloadLocation (aka local libdir)
-        cmdLine = cmdLine.replace("<libdir>", libdir.getAbsolutePath() + "/");
-        //substitute <path.separator> on local VM, not necessarily the same as server 
-        cmdLine = cmdLine.replace("<path.separator>", File.pathSeparator);
-        //substitute <java> 
-        String java = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
-        //add .exe extension if this is Windows
-        java += (System.getProperty("os.name").startsWith("Windows") ? ".exe" : "");
-        cmdLine = cmdLine.replace("<java>", java);
-
-        //get the substituted commandline from the serverField
-        final String getTaskRESTCall = 
-                info.getGpServer() + REST_API_JOB_PATH  + "/" + info.getJobNumber() + "/visualizerCmdLine?commandline=" + encodeURIcomponent(cmdLine);
-        final String response = Util.doGetRequest(info.getBasicAuthHeader(), getTaskRESTCall);
-
-        final JSONTokener tokener = new JSONTokener(response);
-        final JSONObject root = new JSONObject(tokener);
-        final JSONArray cmdLineArr = root.getJSONArray("commandline");
-        log.debug("commandLine (from server): " + cmdLineArr);
-
-        final String[] commandLineLocal = new String[cmdLineArr.length()];
-        for(int i=0;i< cmdLineArr.length(); i++) {
-            String argValue = cmdLineArr.getString(i);
-            if (argValue.startsWith("/gp/")) {
-                // e.g. gpServer=http://127.0.0.1:8080/gp
-                argValue=argValue.replaceFirst("/gp", info.getGpServer());
-            }
-            if(inputURLMap.containsKey(argValue)) {
-                argValue = downloadLocation.getAbsolutePath() + "/" + inputURLMap.get(argValue);
-            }
-            commandLineLocal[i] = argValue;
-        }
-
-        log.debug("commandLine (local): " + Arrays.asList(commandLineLocal));
-        return commandLineLocal;
-    }
-
     private void runVisualizer(final String[] cmdLineLocal) throws IOException {
         try {
             log.info("running command " + Arrays.asList(cmdLineLocal));
@@ -268,65 +186,6 @@ public class VisualizerLauncher {
         catch (IOException e) {
             log.error("Error running visualizer command: "+cmdLineLocal, e);
         }
-    }
-
-    /**
-     * @return Map<String,String> inputUrlToFilePathMap
-     */
-    protected Map<String,String> downloadInputFiles() throws Exception {
-        if (info == null) {
-            throw new IllegalArgumentException("info==null");
-        }
-        if (Util.isNullOrEmpty(info.getJobNumber())) {
-            throw new IllegalArgumentException("job number not set");
-        }
-
-        // GET /gp/rest/v1/jobs/{jobId}/visualizerInputFiles{.json}
-        final String inputFilesJson = Util.doGetRequest(
-                info.getBasicAuthHeader(), 
-                info.getGpServer() + REST_API_JOB_PATH  + "/" + info.getJobNumber() + "/visualizerInputFiles");
-        if (log.isTraceEnabled()) {
-            log.trace(inputFilesJson);
-        }
-
-        final JSONObject inputFilesJsonObj=new JSONObject(inputFilesJson);
-        final JSONArray inputFiles=inputFilesJsonObj.getJSONArray("inputFiles");
-        final Map<String, String> map = new HashMap<String, String>();
-        for(int i=0;i<inputFiles.length();i++) {
-            final String inputFile = inputFiles.getString(i);
-            final String inputFileUrlStr=initInputFileUrlStr(inputFile);
-            final String filenameWithExtension=filenameWithExt(inputFileUrlStr);
-            final URL fileURL = downloadInputFile(inputFileUrlStr);
-            map.put(fileURL.toString(), filenameWithExtension);
-        }
-        return map;
-    }
-
-    protected String initInputFileUrlStr(final String inputFile) {
-        if (inputFile.startsWith("<GenePatternURL>")) {
-            return inputFile.replaceFirst("<GenePatternURL>", info.getGpServer()+"/");
-        }
-        else if (inputFile.startsWith("/gp/")) {
-            // e.g. gpServer=http://127.0.0.1:8080/gp
-            return inputFile.replaceFirst("/gp", info.getGpServer());
-        }
-        else {
-            return inputFile;
-        }
-    }
-
-    protected String filenameWithExt(final String inputFile) {
-        final int slashIndex = inputFile.lastIndexOf('/');
-        final String filenameWithExtension =  inputFile.substring(slashIndex + 1);
-        return filenameWithExtension;
-    }
-
-    protected URL downloadInputFile(final String inputFile)
-            throws MalformedURLException, IOException {
-        final String filenameWithExtension=filenameWithExt(inputFile);
-        final URL fileURL = new URL(inputFile);
-        FileUtil.downloadFile(info.getBasicAuthHeader(), fileURL, downloadLocation, filenameWithExtension);
-        return fileURL;
     }
 
     private void handleExecError(final String prefix, Throwable t) {
@@ -348,12 +207,11 @@ public class VisualizerLauncher {
             log.info("     job number: " + info.getJobNumber());
             status="retrieving job details";
             log.info(status+" ...");
-            final String taskLsid=Util.retrieveJobDetails(info.getBasicAuthHeader(), info.getGpServer(), info.getJobNumber());
+            final JobInfo jobInfo = JobInfo.createFromJobId(info);
 
             status="retrieving task details";
             log.info(status+" ...");
-            TaskInfo taskInfo = TaskInfo.createFromLsid(info, taskLsid);
-            this.libdir=taskInfo.getLibdir();
+            final TaskInfo taskInfo = TaskInfo.createFromLsid(info, jobInfo.getTaskLsid());
 
             status="downloading support files";
             log.info(status+" ...");
@@ -361,15 +219,15 @@ public class VisualizerLauncher {
 
             status="downloading input files";
             log.info(status+" ...");
-            final Map<String,String> inputURLToFilePathMap=downloadInputFiles();
+            jobInfo.downloadInputFiles(info);
             
             status="preparing command line";
             log.info(status+" ...");
-            final String[] cmdLineLocal = prepareCommandLineStep(inputURLToFilePathMap, taskInfo.getCommandLine());
+            jobInfo.prepareCommandLineStep(info, taskInfo.getLibdir(), taskInfo.getCommandLine());
 
             status="launching visualizer";
             log.info(status+" ...");
-            runVisualizer(cmdLineLocal);
+            runVisualizer(jobInfo.getCmdLineLocal());
         }
         catch (Throwable t) {
             handleExecError("Error "+status, t);

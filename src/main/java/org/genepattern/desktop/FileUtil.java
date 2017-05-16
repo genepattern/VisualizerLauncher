@@ -99,11 +99,6 @@ public class FileUtil {
         return toFile;
     }
 
-    public static File getDownloadLocation(final String jobNumber) {
-        final File appDir=getAppDir();
-        return new File(appDir, "GenePattern_" + jobNumber);
-    }
-    
     public static File getAppDir() {
         return getAppDir_standard();
     }

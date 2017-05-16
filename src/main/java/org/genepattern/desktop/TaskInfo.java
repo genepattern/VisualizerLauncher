@@ -12,17 +12,19 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
- * Helper class for downloading the module support files.
+ * Helper class for downloading task details from the server.
  * @author pcarr
- *
  */
 public class TaskInfo {
     private static final Logger log = LogManager.getLogger(TaskInfo.class);
 
+    /**
+     * GET /rest/v1/tasks/{taskLsid}?includeSupportFiles=true
+     */
     protected static JSONObject getTaskJson(final GpServerInfo info, final String taskLsid) 
     throws IOException {
         final String getTaskRESTCall = 
-                info.getGpServer() + VisualizerLauncher.REST_API_TASK_PATH  + "/" + taskLsid + "?includeSupportFiles=true";
+                info.getGpServer() + "/rest/v1/tasks/" + taskLsid + "?includeSupportFiles=true";
         final String response =
                 Util.doGetRequest(info.getBasicAuthHeader(), getTaskRESTCall);
         return new JSONObject(response);
@@ -59,7 +61,7 @@ public class TaskInfo {
         }
         
         // <app.dir>/taskLib/<task.name>_v<task.version>/
-        File appDir=FileUtil.getAppDir();
+        final File appDir=FileUtil.getAppDir();
         taskInfo.libdir=new File(appDir, "taskLib/"+taskInfo.name+"_v"+taskInfo.version);
         return taskInfo;
     }
@@ -71,6 +73,10 @@ public class TaskInfo {
     private String commandLine;
     private List<String> supportFileUrls=new ArrayList<String>();
     
+    public String getLsid() {
+        return lsid;
+    }
+
     public File getLibdir() {
         return libdir;
     }
@@ -81,9 +87,9 @@ public class TaskInfo {
 
     protected boolean checkCache=true;
     
-    protected String extractFilename(final String supportFileUrl) {
-        final int slashIndex = supportFileUrl.lastIndexOf('=');
-        final String filename =  supportFileUrl.substring(slashIndex + 1);
+    protected static String extractFilename(final String fromUrl) {
+        final int idx = fromUrl.lastIndexOf('=');
+        final String filename = fromUrl.substring(idx + 1);
         return filename;
     }
 
