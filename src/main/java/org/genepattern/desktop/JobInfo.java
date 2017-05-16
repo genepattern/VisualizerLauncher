@@ -1,46 +1,202 @@
 package org.genepattern.desktop;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
-/**
- * Created by nazaire on 4/6/16.
- */
-public class JobInfo
-{
-    private String jobNumber;
-    private GPTask gpTask;
-    private String[] commandLine;
-    private Map<String,String> inputURLToFilePathMap;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 
-    public String getJobNumber() {
-        return jobNumber;
+public class JobInfo {
+    private static final Logger log = LogManager.getLogger(JobInfo.class);
+    public static final String REST_API_JOB_PATH  = "/rest/v1/jobs";
+    
+    public static JobInfo createFromJobId(final GpServerInfo info) throws Exception {
+        final JobInfo jobInfo=new JobInfo();
+        jobInfo.jobId=info.getJobNumber();
+        // <app.dir>/jobs/<jobid>
+        final File appDir=FileUtil.getAppDir();
+        jobInfo.jobdir = new File(appDir, "jobs/" + info.getJobNumber());
+        jobInfo.taskLsid=JobInfo.retrieveJobDetails(info.getBasicAuthHeader(), info.getGpServer(), info.getJobNumber());
+        jobInfo.retrieveInputFileDetails(info);
+        return jobInfo;
+    }
+    
+    // GET /rest/v1/jobs/{jobId}
+    protected static String retrieveJobDetails(final String basicAuthHeader, final String gpServer, final String jobId) 
+    throws Exception, JSONException {
+        final String response = Util.doGetRequest(basicAuthHeader, 
+            gpServer + REST_API_JOB_PATH + "/" + jobId);
+        log.trace(response);
+        final JSONObject root = new JSONObject(response);
+        final String taskLsid = root.getString("taskLsid");
+        if(taskLsid == null || taskLsid.length() == 0) {
+            throw new Exception("taskLsid not found");
+        }
+        return taskLsid;
+    }
+    
+    private JobInfo() {
+    }
+    
+    private String jobId;
+    private String taskLsid;
+    private File jobdir;
+    private String[] commandLineLocal;
+    protected boolean checkCache=true;
+
+    /** map of url->local_path */
+    private Map<String, String> inputFiles = new LinkedHashMap<String,String>();
+    
+    public String getTaskLsid() {
+        return taskLsid;
+    }
+    
+    public String[] getCmdLineLocal() {
+        return commandLineLocal;
+    }
+    
+    // GET /rest/v1/jobs/{jobId}/visualizerInputFiles
+    public void retrieveInputFileDetails(final GpServerInfo info) throws Exception {
+        final String inputFilesJson = Util.doGetRequest(
+                info.getBasicAuthHeader(), 
+                info.getGpServer() + REST_API_JOB_PATH  + "/" + jobId + "/visualizerInputFiles");
+        if (log.isTraceEnabled()) {
+            log.trace(inputFilesJson);
+        }
+
+        final JSONObject inputFilesJsonObj=new JSONObject(inputFilesJson);
+        final JSONArray inputFilesArr=inputFilesJsonObj.getJSONArray("inputFiles");
+        for(int i=0;i<inputFilesArr.length();i++) {
+            final String inputFile = inputFilesArr.getString(i);
+            final String inputFileUrlStr=initInputFileUrlStr(info, inputFile);
+            final String filenameWithExtension=extractFilenameFromUrl(inputFileUrlStr);
+            this.inputFiles.put(inputFileUrlStr, filenameWithExtension);
+        }
     }
 
-    public void setJobNumber(String jobNumber) {
-        this.jobNumber = jobNumber;
+    protected String initInputFileUrlStr(final GpServerInfo info, final String inputFile) {
+        if (inputFile.startsWith("<GenePatternURL>")) {
+            return inputFile.replaceFirst("<GenePatternURL>", info.getGpServer()+"/");
+        }
+        else if (inputFile.startsWith("/gp/")) {
+            // e.g. gpServer=http://127.0.0.1:8080/gp
+            return inputFile.replaceFirst("/gp", info.getGpServer());
+        }
+        else {
+            return inputFile;
+        }
     }
 
-    public GPTask getGpTask() {
-        return gpTask;
+    protected static String extractFilenameFromUrl(final String fromUrl) {
+        final int idx = fromUrl.lastIndexOf('/');
+        final String filename = fromUrl.substring(idx + 1);
+        return filename;
     }
 
-    public void setGpTask(GPTask gpTask) {
-        this.gpTask = gpTask;
+    public void downloadInputFiles(final GpServerInfo info) throws Exception {
+        if (inputFiles==null) {
+            log.error("inputFiles not set");
+            return;
+        }
+        if (inputFiles.size()==0) {
+            log.warn("inputFiles.size==0");
+            return;
+        }
+        if (log.isInfoEnabled()) {
+            log.info("     to jobdir: "+jobdir);
+        }
+
+        for(Entry<String,String> entry : inputFiles.entrySet()) {
+            final String fromUrl=entry.getKey();
+            final String filename=entry.getValue();
+            try {
+                final File toFile=new File(jobdir, filename);
+                if (checkCache && toFile.exists()) {
+                    log.info("     (cached) '"+filename+"'");
+                }
+                else {
+                    log.info("     downloading '"+filename+"' ...");
+                    FileUtil.downloadFile(info.getBasicAuthHeader(), new URL(fromUrl), toFile);                
+                }
+            }
+            catch (Throwable t) {
+                throw new Exception("Error downloading input file: '"+fromUrl+"'"+t.getMessage());
+            }
+        }
+    }
+    
+    /** helper method: surround each space-delimited token in double quotes */
+    protected static String wrapTokensInQuotes(final String cmdLineIn) {
+        String cmdLine="";
+        String[] args=cmdLineIn.split(" ");
+        for(final String argIn : args) {
+            if (!Util.isNullOrEmpty(argIn)) {
+                // wrap everything in double quotes
+                final String arg = "\"" + argIn + "\" ";
+                cmdLine=cmdLine+arg;
+            }
+        }
+        // strip trailing " "
+        cmdLine=cmdLine.substring(0, cmdLine.length()-1);
+        return cmdLine;
+    }
+    
+    protected static String wrapInQuotes(final String arg) {
+        return "\"" + arg + "\"";
     }
 
-    public String[] getCommandLine() {
-        return commandLine;
+    public void prepareCommandLineStep(final GpServerInfo info, final File libdir, final String commandLine) throws IOException {
+        if (commandLine==null) {
+            throw new IllegalArgumentException("commandLine==null");
+        }
+        if (inputFiles==null) {
+            throw new IllegalArgumentException("inputFiles==null");
+        }
+        //wrap args in double quotes
+        String cmdLine = wrapTokensInQuotes(commandLine);
+        //substitute <libdir> with the downloadLocation (aka local libdir)
+        cmdLine = cmdLine.replace("<libdir>", libdir.getAbsolutePath() + "/");
+        //substitute <path.separator> on local VM, not necessarily the same as server 
+        cmdLine = cmdLine.replace("<path.separator>", File.pathSeparator);
+        //substitute <java> 
+        String java = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
+        //add .exe extension if this is Windows
+        java += (System.getProperty("os.name").startsWith("Windows") ? ".exe" : "");
+        cmdLine = cmdLine.replace("<java>", java);
+
+        //get the substituted commandline from the serverField
+        final String getTaskRESTCall = 
+                info.getGpServer() + JobInfo.REST_API_JOB_PATH  + "/" + info.getJobNumber() + "/visualizerCmdLine?commandline=" + VisualizerLauncher.encodeURIcomponent(cmdLine);
+        final String response = Util.doGetRequest(info.getBasicAuthHeader(), getTaskRESTCall);
+
+        final JSONTokener tokener = new JSONTokener(response);
+        final JSONObject root = new JSONObject(tokener);
+        final JSONArray cmdLineArr = root.getJSONArray("commandline");
+        log.debug("commandLine (from server): " + cmdLineArr);
+
+        commandLineLocal = new String[cmdLineArr.length()];
+        for(int i=0;i< cmdLineArr.length(); i++) {
+            String argValue = cmdLineArr.getString(i);
+            if (argValue.startsWith("/gp/")) {
+                // e.g. gpServer=http://127.0.0.1:8080/gp
+                argValue=argValue.replaceFirst("/gp", info.getGpServer());
+            }
+            if(inputFiles.containsKey(argValue)) {
+                argValue = jobdir.getAbsolutePath() + "/" + inputFiles.get(argValue);
+            }
+            commandLineLocal[i] = argValue;
+        }
+
+        log.debug("commandLine (local): " + Arrays.asList(commandLineLocal));
     }
 
-    public void setCommandLine(String[] commandLine) {
-        this.commandLine = commandLine;
-    }
-
-    public Map<String, String> getInputURLToFilePathMap() {
-        return inputURLToFilePathMap;
-    }
-
-    public void setInputURLToFilePathMap(Map<String,String> inputURLToFilePathMap) {
-        this.inputURLToFilePathMap = inputURLToFilePathMap;
-    }
 }

@@ -59,7 +59,7 @@ public class TestAll {
         final String basicAuthHeader=Util.initBasicAuthHeader(username, password);
         String actual="";
         try {
-            actual=Util.retrieveJobDetails(basicAuthHeader, gpServer, jobId);
+            actual=JobInfo.retrieveJobDetails(basicAuthHeader, gpServer, jobId);
         }
         catch (Exception e) {
             fail(""+e.getMessage());
