@@ -21,7 +21,7 @@ Click `Submit` ... the launcher downloads the application and data files from th
 
 *Note:* To start from a command line shell (aka Terminal.app on Mac OS X) ...
 ```
-java -jar visualizerLauncher-1.2.6.jar
+java -jar visualizerLauncher-1.2.5.jar
 ```
 
 ### Support or Contact
