@@ -1,7 +1,23 @@
 Code signing is not integrated into the build script. At the Broad Institute we do something like ...
 
+
+## Java executable jar file distribution
+
+Pass in 'signjar.alias' and 'signjar.storepass' as mvn command line args. Use the jarsigner command
+to verify the signature, and the manually copy the file into a dist folder for upload as a release
+artifact.
+
+For example for the 1.2.7 release ...
+
+  mvn -Dsignjar.keystore=${HOME}/.gp_build/genepattern-codesign.jks -Dsignjar.alias=codesign -Dsignjar.storepass=********
+  jarsigner -verify target/visualizerLauncher-1.2.7-full.jar 
+  mkdirs dist
+  cp -rp target/visualizerLauncher-1.2.7-full.jar dist/visualizerLauncher-1.2.7.jar 
+
+## Mac OS X distribution
+
 1) create a zip file
-   cd target/VisualizerLauncher-1.2.1-SNAPSHOT-r2
+   cd target/visualizerLauncher-1.2.7
    zip -r VisualizerLauncher.app.zip VisualizerLauncher.app
 
 2) copy it to remote server
