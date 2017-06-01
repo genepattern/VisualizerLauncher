@@ -32,7 +32,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>genepattern.org</groupId>
   <artifactId>visualizerLauncher</artifactId>
-  <version>1.2.7-b${buildNumber}</version>
+  <version>1.2.7</version>
   <name>VisualizerLauncher</name>
   <url>http://maven.apache.org</url>
   
@@ -47,7 +47,7 @@
 
     <mainClass>org.genepattern.desktop.VisualizerLauncher</mainClass>
     <exec.mainClass>${mainClass}</exec.mainClass>
-    <jarName>${project.artifactId}-${project.version}</jarName>
+    <jarName>${project.artifactId}-${project.version}-b${buildNumber}</jarName>
     <!-- the signed executable jar file, includes all dependencies -->
     <jarFile>${project.build.directory}/${jarName}-full.jar</jarFile>
 
@@ -234,10 +234,12 @@
         ==================================================
           appbundle-maven-plugin (Mac OS X)
         ==================================================
+        Package as a Mac OS X application bundle
         Usage:
           mvn package appbundle:bundle
-        Package as a Mac OS X application bundle
+          mvn help:describe -Dplugin=appbundle -Ddetail
         See: 
+          https://mvnrepository.com/artifact/sh.tak.appbundler/appbundle-maven-plugin/1.2.0
           https://github.com/federkasten/appbundle-maven-plugin
       -->
       <plugin>
