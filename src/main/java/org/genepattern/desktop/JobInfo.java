@@ -183,9 +183,29 @@ public class JobInfo {
         final JSONArray cmdLineArr = root.getJSONArray("commandline");
         log.debug("commandLine (from server): " + cmdLineArr);
 
-        commandLineLocal = new String[cmdLineArr.length()];
-        for(int i=0;i< cmdLineArr.length(); i++) {
-            String argValue = cmdLineArr.getString(i);
+        this.commandLineLocal=initCmdLineLocal(info, cmdLineArr);
+        log.debug("commandLine (local): " + Arrays.asList(commandLineLocal));
+    }
+
+    /** convert from JSONArray to String[]. */
+    protected static String[] asStringArray(final JSONArray jsonArr) {
+        final int K = jsonArr.length();
+        final String[] arr = new String[K];
+        for(int i=0; i<K; i++) {
+            arr[i]=jsonArr.getString(i);
+        }
+        return arr;
+    }
+
+    protected String[] initCmdLineLocal(final GpServerInfo info, final JSONArray commandlineJson) {
+        final String[] cmdLineLocal = asStringArray( commandlineJson );
+        substituteLocalFilePaths(info, cmdLineLocal);
+        return cmdLineLocal;
+    }
+
+    protected String[] substituteLocalFilePaths(final GpServerInfo info, final String[] cmdLineLocal) {
+        for(int i=0;i< cmdLineLocal.length; i++) {
+            String argValue = cmdLineLocal[i];
             if (argValue.startsWith("/gp/")) {
                 // e.g. gpServer=http://127.0.0.1:8080/gp
                 argValue=argValue.replaceFirst("/gp", info.getGpServer());
@@ -193,10 +213,9 @@ public class JobInfo {
             if(inputFiles.containsKey(argValue)) {
                 argValue = jobdir.getAbsolutePath() + "/" + inputFiles.get(argValue);
             }
-            commandLineLocal[i] = argValue;
+            cmdLineLocal[i] = argValue;
         }
-
-        log.debug("commandLine (local): " + Arrays.asList(commandLineLocal));
+        return commandLineLocal;
     }
 
 }
