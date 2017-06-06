@@ -44,7 +44,7 @@ public class JobInfo {
         return taskLsid;
     }
     
-    private JobInfo() {
+    protected JobInfo() {
     }
     
     private String jobId;
@@ -76,15 +76,21 @@ public class JobInfo {
         final JSONObject inputFilesJsonObj=new JSONObject(inputFilesJson);
         final JSONArray inputFilesArr=inputFilesJsonObj.getJSONArray("inputFiles");
         for(int i=0;i<inputFilesArr.length();i++) {
-            final String inputFile = inputFilesArr.getString(i);
-            final String inputFileUrlStr=initInputFileUrlStr(info, inputFile);
-            final String filenameWithExtension=extractFilenameFromUrl(inputFileUrlStr);
-            this.inputFiles.put(inputFileUrlStr, filenameWithExtension);
+            addInputFile(info, inputFilesArr.getString(i));
         }
     }
 
-    protected String initInputFileUrlStr(final GpServerInfo info, final String inputFile) {
-        if (inputFile.startsWith("<GenePatternURL>")) {
+    protected void addInputFile(final GpServerInfo info, final String inputFile) {
+        final String inputFileUrlStr=initInputFileUrlStr(info, inputFile);
+        final String filenameWithExtension=extractFilenameFromUrl(inputFileUrlStr);
+        this.inputFiles.put(inputFileUrlStr, filenameWithExtension);
+    }
+
+    protected static String initInputFileUrlStr(final GpServerInfo info, final String inputFile) {
+        if (inputFile.startsWith("<GenePatternURL>/")) {
+            return inputFile.replaceFirst("<GenePatternURL>/", info.getGpServer()+"/");
+        }
+        else if (inputFile.startsWith("<GenePatternURL>")) {
             return inputFile.replaceFirst("<GenePatternURL>", info.getGpServer()+"/");
         }
         else if (inputFile.startsWith("/gp/")) {
@@ -97,8 +103,16 @@ public class JobInfo {
     }
 
     protected static String extractFilenameFromUrl(final String fromUrl) {
-        final int idx = fromUrl.lastIndexOf('/');
-        final String filename = fromUrl.substring(idx + 1);
+        String path;
+        try {
+            path=new URL(fromUrl).toURI().getPath();
+        }
+        catch (Throwable t) {
+            log.error("Error converting url to file path, fromUrl='"+fromUrl+"'", t);
+            path=fromUrl;
+        }
+        final int idx = path.lastIndexOf('/');
+        final String filename = path.substring(idx + 1);
         return filename;
     }
 
@@ -215,7 +229,7 @@ public class JobInfo {
             }
             cmdLineLocal[i] = argValue;
         }
-        return commandLineLocal;
+        return cmdLineLocal;
     }
 
 }
