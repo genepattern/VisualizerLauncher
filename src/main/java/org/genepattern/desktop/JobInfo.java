@@ -218,35 +218,22 @@ public class JobInfo {
     }
 
     protected String[] substituteLocalFilePaths(final GpServerInfo info, final String[] cmdLineLocal) {
-        for(int i=0;i< cmdLineLocal.length; i++) {
-            cmdLineLocal[i] = substituteLocalFilePath(info, cmdLineLocal[i]);
+        final String jobdirPath=jobdir != null ? jobdir.getAbsolutePath() + "/" : "";
+        for(int i=0; i< cmdLineLocal.length; i++) {
+            cmdLineLocal[i] = substituteLocalFilePath(jobdirPath, cmdLineLocal[i]);
         }
         return cmdLineLocal;
     }
-
-    protected String substituteLocalFilePath(final GpServerInfo info, String argValue) {
-        if (argValue.startsWith("/gp/")) {
-            // e.g. gpServer=http://127.0.0.1:8080/gp
-            argValue=argValue.replaceFirst("/gp", info.getGpServer());
-        }
-        if (inputFiles.containsKey(argValue)) {
-            if (jobdir != null) {
-                argValue = jobdir.getAbsolutePath() + "/" + inputFiles.get(argValue);
-            }
-        }
-        else {
-            argValue = substituteLocalFilePath2(argValue);
-        }
-        return argValue;
-    }
-
-    protected String substituteLocalFilePath2(String arg) {
+    protected String substituteLocalFilePath(final String jobdirPath, final String cmdLineArgIn) {
+        //Note: special-case for '/gp/...' and '<GenePatternURL>' args 
+        //  are handled by retrieveInputFileDetails
+        String cmdLineArg=cmdLineArgIn;
         for(final Entry<String,String> entry : inputFiles.entrySet()) {
             final String remoteUrl=entry.getKey();
-            final String localPath= jobdir.getAbsolutePath() + "/" + entry.getValue();
-            arg=arg.replaceAll(remoteUrl, localPath);
+            final String localPath= jobdirPath + entry.getValue();
+            cmdLineArg=cmdLineArg.replaceAll(remoteUrl, localPath);
         }
-        return arg;
+        return cmdLineArg;
     }
 
 }
