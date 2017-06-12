@@ -2,38 +2,37 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd"
 >
-  <!-- 
-    ==================================================
-        GenePattern Visualizer Launcher Maven Project 
-    ==================================================
-    Usage:
-      # build ...
-      #   ... creates single jar executable (signed)
-      #   ... creates Mac OS X application bundle (unsigned)
-      mvn package
-    
-      # run visualizer launcher (for debugging, testing)
-      mvn -q clean package exec:java
+<!-- 
+  ==================================================
+    GenePattern Visualizer Launcher Maven Project 
+  ==================================================
+  Usage:
+    # build ...
+    #   ... creates single jar executable (signed)
+    #   ... creates Mac OS X application bundle (unsigned)
+    mvn package
 
-      # run visualizer launcher with the java command
-      java -jar launcher/${jarName}-full.jar
+    # run visualizer launcher (for debugging, testing)
+    mvn -q clean package exec:java
+
+    # run visualizer launcher with the java command
+    java -jar launcher/${jarName}-full.jar
       
-      # use a different certificate ...
-      mvn -Dsignjar.keystore=${HOME}/.gp_build/genepattern-codesign.jks
+    # use a different certificate ...
+    mvn -Dsignjar.keystore=${HOME}/.gp_build/genepattern-codesign.jks
         -Dsignjar.alias=codesign
         -Dsignjar.storepass=....
-        
-      # ===== additional commands =====
-      # check for newer versions of dependencies
-      mvn versions:display-dependency-updates
-      
-      mvn dependency:help
+
+    # ===== additional commands =====
+    # check for newer versions of dependencies
+    mvn versions:display-dependency-updates
+    mvn dependency:help
   -->
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>genepattern.org</groupId>
   <artifactId>visualizerLauncher</artifactId>
-  <version>1.2.6-b${buildNumber}</version>
+  <version>1.2.7</version>
   <name>VisualizerLauncher</name>
   <url>http://maven.apache.org</url>
   
@@ -48,6 +47,7 @@
 
     <mainClass>org.genepattern.desktop.VisualizerLauncher</mainClass>
     <exec.mainClass>${mainClass}</exec.mainClass>
+    <!-- jarName>${project.artifactId}-${project.version}-b${buildNumber}</jarName -->
     <jarName>${project.artifactId}-${project.version}</jarName>
     <!-- the signed executable jar file, includes all dependencies -->
     <jarFile>${project.build.directory}/${jarName}-full.jar</jarFile>
@@ -114,27 +114,27 @@
 
       <!-- Example: how to add an additional classpath element for junit tests -->
       <!--
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.12.4</version>
-            <configuration>
-              <additionalClasspathElements>
-                <additionalClasspathElement>${basedir}/src/test/lib/jdom.jar</additionalClasspathElement>
-              </additionalClasspathElements>
-            </configuration>
-          </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.12.4</version>
+        <configuration>
+          <additionalClasspathElements>
+            <additionalClasspathElement>${basedir}/src/test/lib/jdom.jar</additionalClasspathElement>
+          </additionalClasspathElements>
+        </configuration>
+      </plugin>
       -->
 
-    <!-- 
-      ==================================================
-          maven-shade-plugin 
-      ==================================================
-      Create executable jar file including all library dependencies.
-      Use as an alternative to the maven-assembly-plugin
-      See:
-        https://maven.apache.org/plugins/maven-shade-plugin/
-        https://maven.apache.org/plugins/maven-shade-plugin/shade-mojo.html
+      <!-- 
+        ==================================================
+          maven-shade-plugin
+        ==================================================
+        Create executable jar file including all library dependencies.
+        Use as an alternative to the maven-assembly-plugin
+        See:
+          https://maven.apache.org/plugins/maven-shade-plugin/
+          https://maven.apache.org/plugins/maven-shade-plugin/shade-mojo.html
       -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -151,7 +151,7 @@
               <transformers>
                 <!-- add Main-Class to manifest file -->
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                    <mainClass>${mainClass}</mainClass>
+                  <mainClass>${mainClass}</mainClass>
                 </transformer>
               </transformers>
             </configuration>
@@ -159,15 +159,15 @@
         </executions>
       </plugin>
       
-    <!-- 
-      ==================================================
+      <!-- 
+        ==================================================
           keytool plugin
-      ==================================================
-      Generate default keystore file
-      See:
-        http://www.mojohaus.org/keytool/
-        http://www.mojohaus.org/keytool/keytool-maven-plugin/
-        https://mvnrepository.com/artifact/org.codehaus.mojo/keytool-maven-plugin 
+        ==================================================
+        Generate default keystore file
+        See:
+          http://www.mojohaus.org/keytool/
+          http://www.mojohaus.org/keytool/keytool-maven-plugin/
+          https://mvnrepository.com/artifact/org.codehaus.mojo/keytool-maven-plugin 
       -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
@@ -194,14 +194,14 @@
         </executions>
       </plugin>
 
-    <!-- 
-      ==================================================
+      <!-- 
+        ==================================================
           maven-jarsigner-plugin
-      ==================================================
-      Sign jar file
-      See: 
-        http://maven.apache.org/plugins/maven-jarsigner-plugin/
-     -->
+        ==================================================
+        Sign jar file
+        See: 
+          http://maven.apache.org/plugins/maven-jarsigner-plugin/
+       -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jarsigner-plugin</artifactId>
@@ -231,15 +231,18 @@
         </executions>
       </plugin>
 
-    <!-- 
-      ==================================================
+      <!-- 
+        ==================================================
           appbundle-maven-plugin (Mac OS X)
-      ==================================================
-      Usage:
-        mvn package appbundle:bundle
-      Package as a Mac OS X application bundle
-      See: https://github.com/federkasten/appbundle-maven-plugin
-    -->
+        ==================================================
+        Package as a Mac OS X application bundle
+        Usage:
+          mvn package appbundle:bundle
+          mvn help:describe -Dplugin=appbundle -Ddetail
+        See: 
+          https://mvnrepository.com/artifact/sh.tak.appbundler/appbundle-maven-plugin/1.2.0
+          https://github.com/federkasten/appbundle-maven-plugin
+      -->
       <plugin>
         <groupId>sh.tak.appbundler</groupId>
         <artifactId>appbundle-maven-plugin</artifactId>
@@ -259,32 +262,32 @@
         </executions>
       </plugin>
 
-    <!-- 
-      ==================================================
+      <!-- 
+        ==================================================
           exec-maven-plugin
-      ==================================================
-      Run the VisualizerLauncher from the mvn command line.
-      Usage:
+        ==================================================
+        Run the VisualizerLauncher from the mvn command line.
+        Usage:
           mvn -q clean package exec:java
-      Note: '-q' means quiet, -X for debug output
-    -->
+        Note: '-q' means quiet, -X for debug output
+      -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <version>1.6.0</version>
       </plugin>
 
-    <!-- 
-      ==================================================
+      <!-- 
+        ==================================================
           maven-clean-plugin
-      ==================================================
-      Cleanup additional files which are created when you run the application
-        ./logs
-        ./visualizerLauncher 
-      By default only the target directory is deleted.
-      See: 
-        https://maven.apache.org/plugins/maven-clean-plugin/
-    -->
+        ==================================================
+        Cleanup additional files which are created when you run the application
+          ./logs
+          ./visualizerLauncher 
+        By default only the target directory is deleted.
+        See: 
+          https://maven.apache.org/plugins/maven-clean-plugin/
+      -->
       <plugin>
         <artifactId>maven-clean-plugin</artifactId>
         <version>3.0.0</version>
@@ -331,9 +334,9 @@
 
     <!-- https://mvnrepository.com/artifact/org.json/json -->
     <dependency>
-        <groupId>org.json</groupId>
-        <artifactId>json</artifactId>
-        <version>20160810</version>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>20160810</version>
     </dependency>
 
     <!-- 
@@ -353,6 +356,7 @@
       Required for AppDirs plugin
       See:
         https://mvnrepository.com/artifact/net.java.dev.jna/jna 
+        https://mvnrepository.com/artifact/net.java.dev.jna/jna-platform
     -->
     <dependency>
       <groupId>net.java.dev.jna</groupId>
@@ -368,13 +372,12 @@
     <!--
       AppDirs plugin for platform dependent application data paths
       See:
-        https://mvnrepository.com/artifact/net.harawata/appdirs 
-        
+        https://mvnrepository.com/artifact/net.harawata/appdirs
     -->
     <dependency>
-        <groupId>net.harawata</groupId>
-        <artifactId>appdirs</artifactId>
-        <version>1.0.0</version>
+      <groupId>net.harawata</groupId>
+      <artifactId>appdirs</artifactId>
+      <version>1.0.0</version>
     </dependency>
     
     <!--
@@ -385,9 +388,9 @@
         https://logging.apache.org/log4j/2.0/faq.html
     -->
     <dependency>
-        <groupId>org.apache.logging.log4j</groupId>
-        <artifactId>log4j-slf4j-impl</artifactId>
-        <version>2.8.2</version>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+      <version>2.8.2</version>
     </dependency>
 
     <!-- for testing -->

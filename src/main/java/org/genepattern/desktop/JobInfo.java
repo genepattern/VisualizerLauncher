@@ -44,12 +44,12 @@ public class JobInfo {
         return taskLsid;
     }
     
-    private JobInfo() {
+    protected JobInfo() {
     }
     
     private String jobId;
     private String taskLsid;
-    private File jobdir;
+    protected File jobdir;
     private String[] commandLineLocal;
     protected boolean checkCache=true;
 
@@ -76,15 +76,21 @@ public class JobInfo {
         final JSONObject inputFilesJsonObj=new JSONObject(inputFilesJson);
         final JSONArray inputFilesArr=inputFilesJsonObj.getJSONArray("inputFiles");
         for(int i=0;i<inputFilesArr.length();i++) {
-            final String inputFile = inputFilesArr.getString(i);
-            final String inputFileUrlStr=initInputFileUrlStr(info, inputFile);
-            final String filenameWithExtension=extractFilenameFromUrl(inputFileUrlStr);
-            this.inputFiles.put(inputFileUrlStr, filenameWithExtension);
+            addInputFile(info, inputFilesArr.getString(i));
         }
     }
 
-    protected String initInputFileUrlStr(final GpServerInfo info, final String inputFile) {
-        if (inputFile.startsWith("<GenePatternURL>")) {
+    protected void addInputFile(final GpServerInfo info, final String inputFile) {
+        final String inputFileUrlStr=initInputFileUrlStr(info, inputFile);
+        final String filenameWithExtension=extractFilenameFromUrl(inputFileUrlStr);
+        this.inputFiles.put(inputFileUrlStr, filenameWithExtension);
+    }
+
+    protected static String initInputFileUrlStr(final GpServerInfo info, final String inputFile) {
+        if (inputFile.startsWith("<GenePatternURL>/")) {
+            return inputFile.replaceFirst("<GenePatternURL>/", info.getGpServer()+"/");
+        }
+        else if (inputFile.startsWith("<GenePatternURL>")) {
             return inputFile.replaceFirst("<GenePatternURL>", info.getGpServer()+"/");
         }
         else if (inputFile.startsWith("/gp/")) {
@@ -97,8 +103,16 @@ public class JobInfo {
     }
 
     protected static String extractFilenameFromUrl(final String fromUrl) {
-        final int idx = fromUrl.lastIndexOf('/');
-        final String filename = fromUrl.substring(idx + 1);
+        String path;
+        try {
+            path=new URL(fromUrl).toURI().getPath();
+        }
+        catch (Throwable t) {
+            log.error("Error converting url to file path, fromUrl='"+fromUrl+"'", t);
+            path=fromUrl;
+        }
+        final int idx = path.lastIndexOf('/');
+        final String filename = path.substring(idx + 1);
         return filename;
     }
 
@@ -183,20 +197,43 @@ public class JobInfo {
         final JSONArray cmdLineArr = root.getJSONArray("commandline");
         log.debug("commandLine (from server): " + cmdLineArr);
 
-        commandLineLocal = new String[cmdLineArr.length()];
-        for(int i=0;i< cmdLineArr.length(); i++) {
-            String argValue = cmdLineArr.getString(i);
-            if (argValue.startsWith("/gp/")) {
-                // e.g. gpServer=http://127.0.0.1:8080/gp
-                argValue=argValue.replaceFirst("/gp", info.getGpServer());
-            }
-            if(inputFiles.containsKey(argValue)) {
-                argValue = jobdir.getAbsolutePath() + "/" + inputFiles.get(argValue);
-            }
-            commandLineLocal[i] = argValue;
-        }
-
+        this.commandLineLocal=initCmdLineLocal(info, cmdLineArr);
         log.debug("commandLine (local): " + Arrays.asList(commandLineLocal));
+    }
+
+    /** convert from JSONArray to String[]. */
+    protected static String[] asStringArray(final JSONArray jsonArr) {
+        final int K = jsonArr.length();
+        final String[] arr = new String[K];
+        for(int i=0; i<K; i++) {
+            arr[i]=jsonArr.getString(i);
+        }
+        return arr;
+    }
+
+    protected String[] initCmdLineLocal(final GpServerInfo info, final JSONArray commandlineJson) {
+        final String[] cmdLineLocal = asStringArray( commandlineJson );
+        substituteLocalFilePaths(info, cmdLineLocal);
+        return cmdLineLocal;
+    }
+
+    protected String[] substituteLocalFilePaths(final GpServerInfo info, final String[] cmdLineLocal) {
+        final String jobdirPath=jobdir != null ? jobdir.getAbsolutePath() + "/" : "";
+        for(int i=0; i< cmdLineLocal.length; i++) {
+            cmdLineLocal[i] = substituteLocalFilePath(jobdirPath, cmdLineLocal[i]);
+        }
+        return cmdLineLocal;
+    }
+    protected String substituteLocalFilePath(final String jobdirPath, final String cmdLineArgIn) {
+        //Note: special-case for '/gp/...' and '<GenePatternURL>' args 
+        //  are handled by retrieveInputFileDetails
+        String cmdLineArg=cmdLineArgIn;
+        for(final Entry<String,String> entry : inputFiles.entrySet()) {
+            final String remoteUrl=entry.getKey();
+            final String localPath= jobdirPath + entry.getValue();
+            cmdLineArg=cmdLineArg.replaceAll(remoteUrl, localPath);
+        }
+        return cmdLineArg;
     }
 
 }
