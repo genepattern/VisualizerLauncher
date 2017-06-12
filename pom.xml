@@ -47,7 +47,8 @@
 
     <mainClass>org.genepattern.desktop.VisualizerLauncher</mainClass>
     <exec.mainClass>${mainClass}</exec.mainClass>
-    <jarName>${project.artifactId}-${project.version}-b${buildNumber}</jarName>
+    <!-- jarName>${project.artifactId}-${project.version}-b${buildNumber}</jarName -->
+    <jarName>${project.artifactId}-${project.version}</jarName>
     <!-- the signed executable jar file, includes all dependencies -->
     <jarFile>${project.build.directory}/${jarName}-full.jar</jarFile>
 
