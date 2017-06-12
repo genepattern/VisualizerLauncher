@@ -1,10 +1,6 @@
 package org.genepattern.desktop;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpEntity;
@@ -80,27 +76,6 @@ public class Util {
         finally {
             httpClient.close();
         }
-    }
-
-    /** create thread to read from a process output or error stream */
-    protected static final Thread copyStream(final InputStream is, final PrintStream out) {
-        Thread copyThread = new Thread(new Runnable() {
-            public void run() {
-                BufferedReader in = new BufferedReader(new InputStreamReader(is));
-                String line;
-                try {
-                    while ((line = in.readLine()) != null) {
-                        out.println(line);
-                    }
-                } 
-                catch (IOException ioe) {
-                    log.error("Error reading from process stream.", ioe);
-                }
-            }
-        });
-        copyThread.setDaemon(true);
-        copyThread.start();
-        return copyThread;
     }
 
 }
