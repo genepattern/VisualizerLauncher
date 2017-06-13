@@ -6,7 +6,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Utility class for visualizer input files.
+ * Utility class for visualizer input file values returned from the REST API
+ *   GET /rest/v1/jobs/{jobId}/visualizerInputFiles
  * 
  * @author pcarr
  */
@@ -74,10 +75,11 @@ public class InputFileInfo {
         this.filename=getFilenameFromUrl(url);
     }
 
-    // the value returned from the REST API
-    //   /rest/v1/jobs/1503348/visualizerInputFiles
+    /** the 'inputFile' value returned from the REST API */
     final String arg;
+    /** the fully qualified url to download the file from the server */
     final String url;
+    /** the local name for the file */
     final String filename;
     
     public String getArg() {

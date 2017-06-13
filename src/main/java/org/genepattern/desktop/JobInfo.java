@@ -3,10 +3,10 @@ package org.genepattern.desktop;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Collections;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,8 +20,7 @@ public class JobInfo {
     public static final String REST_API_JOB_PATH  = "/rest/v1/jobs";
     
     public static JobInfo createFromJobId(final GpServerInfo info) throws Exception {
-        final JobInfo jobInfo=new JobInfo();
-        jobInfo.jobId=info.getJobNumber();
+        final JobInfo jobInfo=new JobInfo(info.getJobNumber());
         // <app.dir>/jobs/<jobid>
         final File appDir=FileUtil.getAppDir();
         jobInfo.jobdir = new File(appDir, "jobs/" + info.getJobNumber());
@@ -44,22 +43,26 @@ public class JobInfo {
         return taskLsid;
     }
     
-    protected JobInfo() {
+    protected JobInfo(final String jobId) {
+        this.jobId=jobId;
     }
     
-    private String jobId;
+    private final String jobId;
     private String taskLsid;
     protected File jobdir;
     private String[] commandLineLocal;
     protected boolean checkCache=true;
 
-    /** map of url->local_path */
-    private Map<String, String> inputFiles = new LinkedHashMap<String,String>();
-    
+    private List<InputFileInfo> inputFiles = new ArrayList<InputFileInfo>();
+
     public String getTaskLsid() {
         return taskLsid;
     }
     
+    public List<InputFileInfo> getInputFiles() {
+        return Collections.unmodifiableList(inputFiles);
+    }
+
     public String[] getCmdLineLocal() {
         return commandLineLocal;
     }
@@ -81,39 +84,14 @@ public class JobInfo {
     }
 
     protected void addInputFile(final GpServerInfo info, final String inputFile) {
-        final String inputFileUrlStr=initInputFileUrlStr(info, inputFile);
-        final String filenameWithExtension=extractFilenameFromUrl(inputFileUrlStr);
-        this.inputFiles.put(inputFileUrlStr, filenameWithExtension);
-    }
-
-    protected static String initInputFileUrlStr(final GpServerInfo info, final String inputFile) {
-        if (inputFile.startsWith("<GenePatternURL>/")) {
-            return inputFile.replaceFirst("<GenePatternURL>/", info.getGpServer()+"/");
+        if (Util.isNullOrEmpty(inputFile)) {
+            log.info("Skipping inputFile='"+inputFile+"'");
+            return;
         }
-        else if (inputFile.startsWith("<GenePatternURL>")) {
-            return inputFile.replaceFirst("<GenePatternURL>", info.getGpServer()+"/");
+        final InputFileInfo inputFileInfo=new InputFileInfo(info, inputFile);
+        if (inputFileInfo != null) {
+            inputFiles.add(inputFileInfo);
         }
-        else if (inputFile.startsWith("/gp/")) {
-            // e.g. gpServer=http://127.0.0.1:8080/gp
-            return inputFile.replaceFirst("/gp", info.getGpServer());
-        }
-        else {
-            return inputFile;
-        }
-    }
-
-    protected static String extractFilenameFromUrl(final String fromUrl) {
-        String path;
-        try {
-            path=new URL(fromUrl).toURI().getPath();
-        }
-        catch (Throwable t) {
-            log.error("Error converting url to file path, fromUrl='"+fromUrl+"'", t);
-            path=fromUrl;
-        }
-        final int idx = path.lastIndexOf('/');
-        final String filename = path.substring(idx + 1);
-        return filename;
     }
 
     public void downloadInputFiles(final GpServerInfo info) throws Exception {
@@ -129,9 +107,9 @@ public class JobInfo {
             log.info("     to jobdir: "+jobdir);
         }
 
-        for(Entry<String,String> entry : inputFiles.entrySet()) {
-            final String fromUrl=entry.getKey();
-            final String filename=entry.getValue();
+        for(final InputFileInfo inputFile : inputFiles) {
+            final String fromUrl=inputFile.getUrl();
+            final String filename=inputFile.getFilename();
             try {
                 final File toFile=new File(jobdir, filename);
                 if (checkCache && toFile.exists()) {
@@ -163,10 +141,6 @@ public class JobInfo {
         cmdLine=cmdLine.substring(0, cmdLine.length()-1);
         return cmdLine;
     }
-    
-    protected static String wrapInQuotes(final String arg) {
-        return "\"" + arg + "\"";
-    }
 
     public void prepareCommandLineStep(final GpServerInfo info, final File libdir, final String commandLine) throws IOException {
         if (commandLine==null) {
@@ -175,19 +149,8 @@ public class JobInfo {
         if (inputFiles==null) {
             throw new IllegalArgumentException("inputFiles==null");
         }
-        //wrap args in double quotes
-        String cmdLine = wrapTokensInQuotes(commandLine);
-        //substitute <libdir> with the downloadLocation (aka local libdir)
-        cmdLine = cmdLine.replace("<libdir>", libdir.getAbsolutePath() + "/");
-        //substitute <path.separator> on local VM, not necessarily the same as server 
-        cmdLine = cmdLine.replace("<path.separator>", File.pathSeparator);
-        //substitute <java> 
-        String java = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
-        //add .exe extension if this is Windows
-        java += (System.getProperty("os.name").startsWith("Windows") ? ".exe" : "");
-        cmdLine = cmdLine.replace("<java>", java);
+        final String cmdLine = preprocessCmdLine(libdir, commandLine);
 
-        //get the substituted commandline from the serverField
         final String getTaskRESTCall = 
                 info.getGpServer() + JobInfo.REST_API_JOB_PATH  + "/" + info.getJobNumber() + "/visualizerCmdLine?commandline=" + VisualizerLauncher.encodeURIcomponent(cmdLine);
         final String response = Util.doGetRequest(info.getBasicAuthHeader(), getTaskRESTCall);
@@ -199,6 +162,31 @@ public class JobInfo {
 
         this.commandLineLocal=initCmdLineLocal(info, cmdLineArr);
         log.debug("commandLine (local): " + Arrays.asList(commandLineLocal));
+    }
+
+    // do local substitutions 
+    protected String preprocessCmdLine(final File libdir, final String commandLine) {
+        //wrap args in double quotes
+        String cmdLine = wrapTokensInQuotes(commandLine);
+        //substitute <libdir> with the downloadLocation (aka local libdir)
+        cmdLine = cmdLine.replace("<libdir>", libdir.getAbsolutePath() + "/");
+        //substitute <path.separator> on local VM, not necessarily the same as server 
+        cmdLine = cmdLine.replace("<path.separator>", File.pathSeparator);
+        //substitute <java> 
+        final String java = getSystemJavaCmd();
+        cmdLine = cmdLine.replace("<java>", java);
+        return cmdLine;
+    }
+
+    /**
+     * Get the local path to the java executable,
+     * for the '<java>' command line substitution. 
+     */
+    protected static String getSystemJavaCmd() { 
+        String java = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
+        //add .exe extension if this is Windows
+        java += (System.getProperty("os.name").startsWith("Windows") ? ".exe" : "");
+        return java;
     }
 
     /** convert from JSONArray to String[]. */
@@ -224,14 +212,13 @@ public class JobInfo {
         }
         return cmdLineLocal;
     }
+
     protected String substituteLocalFilePath(final String jobdirPath, final String cmdLineArgIn) {
-        //Note: special-case for '/gp/...' and '<GenePatternURL>' args 
-        //  are handled by retrieveInputFileDetails
         String cmdLineArg=cmdLineArgIn;
-        for(final Entry<String,String> entry : inputFiles.entrySet()) {
-            final String remoteUrl=entry.getKey();
-            final String localPath= jobdirPath + entry.getValue();
-            cmdLineArg=cmdLineArg.replaceAll(remoteUrl, localPath);
+        for(final InputFileInfo inputFile : inputFiles) {
+            final String arg=inputFile.getArg();
+            final String localPath= jobdirPath + inputFile.getFilename();
+            cmdLineArg=cmdLineArg.replaceAll(arg, localPath);
         }
         return cmdLineArg;
     }
