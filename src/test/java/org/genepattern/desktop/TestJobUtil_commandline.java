@@ -36,7 +36,7 @@ public class TestJobUtil_commandline {
             .user(user)
             .jobNumber(jobId)
         .build();
-        jobInfo=new JobInfo();
+        jobInfo=new JobInfo(jobId);
         jobInfo.jobdir=jobdir;
     }
 
@@ -62,7 +62,7 @@ public class TestJobUtil_commandline {
     // test 2: '-c<inputFile>' 
     @Test
     public void arg_with_flag() {
-        JobInfo jobInfo=new JobInfo();
+        JobInfo jobInfo=new JobInfo(jobId);
         jobInfo.jobdir=jobdir;
         jobInfo.addInputFile(info, inputFile);
         final String[] cmdIn={ "java", "-c"+inputFile };

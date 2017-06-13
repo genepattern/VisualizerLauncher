@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -29,7 +30,7 @@ import org.junit.runners.Parameterized.Parameters;
  * Parameterized tests for 
  *   {@link JobInfo#initInputFileUrlStr(GpServerInfo, String)}
  *   and 
- *   {@link JobInfo#extractFilenameFromUrl(String)}
+ *   {@link JobInfo#getFilenameFromUrl(String)}
  * 
  * @author pcarr
  */
@@ -115,17 +116,24 @@ public class TestJobUtil_filepaths {
     @Parameter(4)
     public String expectedFilepath="";
 
+    private InputFileInfo inputFileInfo;
+
+    @Before
+    public void setUp() {
+        final GpServerInfo info=new GpServerInfo.Builder()
+                .gpServer(gpServer)
+                .user(user)
+            .build();
+        inputFileInfo = new InputFileInfo(info, inputFile);
+    }
+
     @Test
     public void initInputFileUrlStr() {
-        final GpServerInfo info=new GpServerInfo.Builder()
-            .gpServer(gpServer)
-            .user(user)
-        .build();
         assertEquals(
                 // expected
                 expectedUrl, 
                 // actual
-                JobInfo.initInputFileUrlStr(info, inputFile));
+                inputFileInfo.getUrl());
     }
 
     @Test
@@ -134,7 +142,7 @@ public class TestJobUtil_filepaths {
             //expected
             expectedFilepath,
             // actual
-            JobInfo.extractFilenameFromUrl(expectedUrl));
+            inputFileInfo.getFilename());
     }
 
 }
