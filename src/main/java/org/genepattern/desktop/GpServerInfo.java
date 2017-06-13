@@ -3,8 +3,6 @@ package org.genepattern.desktop;
 /**
  * This is a rewrite of the JobInfo class, holds input values
  * for a single run of the visualizer launcher.
- * 
- * TODO: rename to ... VisualizerInfo or JobInfo 
  */
 public class GpServerInfo {
     private final String basicAuthHeader;

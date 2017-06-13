@@ -18,14 +18,19 @@ import org.junit.Test;
  */
 public class TestAll {
     private static final Logger log = LogManager.getLogger(TestAll.class);
+    
+    public static final String GP_URL="https://genepattern.broadinstitute.org/gp";
+    public static final String TEST_USER="test_user";
+    public static final String TEST_JOB="1";
+    public static final GpServerInfo gpServerInfo=initGpServerInfo();
 
-    final String username="test_user";
-    final String password="test_password";
-    final String gpServer="https://genepattern.broadinstitute.org/gp";
-    final String jobId="1472248";
-    // PredictionResultsViewer_v1 lsid
-    final String PRViewer_LSID=
-        "urn:lsid:broad.mit.edu:cancer.software.genepattern.module.visualizer:00019:1";
+    public static GpServerInfo initGpServerInfo() {
+        return new GpServerInfo.Builder()
+                .gpServer(GP_URL)
+                .user(TEST_USER)
+                .jobNumber(TEST_JOB)
+            .build();
+    }
     
     public static final void assertStartsWith(final String message, final String expected, final String actual) {
         if (!actual.startsWith(expected)) {
@@ -33,6 +38,14 @@ public class TestAll {
         }
     }
 
+    final String username="test_user";
+    final String password="test_password";
+    //final String gpServer="https://genepattern.broadinstitute.org/gp";
+    final String jobId="1472248";
+    // PredictionResultsViewer_v1 lsid
+    final String PRViewer_LSID=
+        "urn:lsid:broad.mit.edu:cancer.software.genepattern.module.visualizer:00019:1";
+    
     @Test
     public void test() {
         log.debug("testing");
@@ -59,7 +72,7 @@ public class TestAll {
         final String basicAuthHeader=Util.initBasicAuthHeader(username, password);
         String actual="";
         try {
-            actual=JobInfo.retrieveJobDetails(basicAuthHeader, gpServer, jobId);
+            actual=JobInfo.retrieveJobDetails(basicAuthHeader, GP_URL, jobId);
         }
         catch (Exception e) {
             fail(""+e.getMessage());
