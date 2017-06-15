@@ -1,5 +1,6 @@
 package org.genepattern.desktop;
 
+import static org.genepattern.desktop.AppDirUtil.PROP_USER_DATA_DIR;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
@@ -21,19 +22,22 @@ public class TestAppDirUtil {
     
     @Before
     public void setUp() throws IOException {
-        userDataDir_initial=System.getProperty(AppDirUtil.PROP_USER_DATA_DIR);
+        userDataDir_initial=System.getProperty(PROP_USER_DATA_DIR);
         if (userDataDir != null) {
-            System.setProperty(AppDirUtil.PROP_USER_DATA_DIR, userDataDir);
+            System.setProperty(PROP_USER_DATA_DIR, userDataDir);
+        }
+        else {
+            System.clearProperty(PROP_USER_DATA_DIR);
         }
     }
     
     @After
     public void tearDown() {
         if (userDataDir_initial != null) {
-            System.setProperty(AppDirUtil.PROP_USER_DATA_DIR, userDataDir_initial);
+            System.setProperty(PROP_USER_DATA_DIR, userDataDir_initial);
         }
         else {
-            System.clearProperty(AppDirUtil.PROP_USER_DATA_DIR);
+            System.clearProperty(PROP_USER_DATA_DIR);
         }
     }
 
@@ -42,11 +46,17 @@ public class TestAppDirUtil {
         final File cwd=new File(".").getCanonicalFile();
         final File home=new File(System.getProperty("user.home")).getCanonicalFile();
         return Arrays.asList(new Object[][] {
+            // not set
             { null, AppDirUtil.getAppDir_standard() },
+            // relative directory
+            { "visualizerLauncher", new File(cwd, "visualizerLauncher") },
+            { "./visualizerLauncher", new File(cwd, "visualizerLauncher") },
+            // current working directory aliases
             { "", cwd },
             { " ", cwd },
             { ".", cwd },
             { "./", cwd },
+            // home directory aliases
             { "~", home },
             { "~/", home },
             { "~/.visualizerLauncher", new File(home,".visualizerLauncher") },
@@ -67,14 +77,14 @@ public class TestAppDirUtil {
     }
 
     @Test
-    public void initUserDataDir() {
+    public void getAppDir_system_prop() {
         //special-case, skip this test when userDataDir==null
         if (userDataDir==null) {
             return;
         }
         assertEquals("'user.data.dir'='"+userDataDir+"'",
             expectedFile,
-            AppDirUtil.initUserDataDir_from_sys(userDataDir));
+            AppDirUtil.getAppDir_system_prop(userDataDir));
     }
 
 }
