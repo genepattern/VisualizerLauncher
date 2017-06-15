@@ -1,6 +1,8 @@
 package org.genepattern.desktop;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpEntity;
@@ -31,6 +33,22 @@ public class Util {
         else {
             return str;
         }
+    }
+
+    /** Converts a string into something you can safely insert into a URL. */
+    @SuppressWarnings("deprecation")
+    public static String encodeURIcomponent(final String str) {
+        String encoded = str;
+        try {
+            encoded = URLEncoder.encode(str, "UTF-8");
+        }
+        catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            encoded = URLEncoder.encode(str);
+        }
+        //replace all '+' with '%20'
+        encoded = encoded.replace("+", "%20");
+        return encoded;
     }
 
     protected static String initBasicAuthHeader(final String username, final String password) {

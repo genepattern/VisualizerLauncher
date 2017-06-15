@@ -10,9 +10,6 @@ import java.net.URLConnection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.harawata.appdirs.AppDirs;
-import net.harawata.appdirs.AppDirsFactory;
-
 /**
  * Utility class for local file management.
  * 
@@ -97,36 +94,6 @@ public class FileUtil {
             }
         }
         return toFile;
-    }
-
-    public static File getAppDir() {
-        return getAppDir_standard();
-    }
-    
-    /**
-     * Get the download location using the AppDirs API.
-     * @param jobNumber
-     * @return
-     */
-    protected static File getAppDir_standard() {
-        final AppDirs appDirs = AppDirsFactory.getInstance();
-        final String appName="VisualizerLauncher";
-        final String appVersion="";
-        final String appAuthor="GenePattern";
-        return new File(appDirs.getUserDataDir(appName, appVersion, appAuthor));
-    }
-
-    protected static File getAppDir_working_dir(final String jobNumber) {
-        return new File("visualizerLauncher");
-    }
-
-    /**
-     * Get the download location relative to the user.home directory:
-     *     <user.home>/Library/visualizerLauncher/GenePattern_<jobNumber>
-     */
-    protected static File getAppDir_user_home(final String jobNumber) {
-        final File home_dir=new File(System.getProperty("user.home"));
-        return new File(home_dir, "Library/visualizerLauncher");
     }
 
 }
