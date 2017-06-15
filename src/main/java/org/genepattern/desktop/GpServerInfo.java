@@ -5,6 +5,8 @@ package org.genepattern.desktop;
  * for a single run of the visualizer launcher.
  */
 public class GpServerInfo {
+    public static final String GP_URL_DEFAULT = "https://genepattern.broadinstitute.org/gp";
+
     private final String basicAuthHeader;
     private final String gpServer;
     private final String jobNumber;

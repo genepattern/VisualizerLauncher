@@ -22,7 +22,7 @@ public class JobInfo {
     public static JobInfo createFromJobId(final GpServerInfo info) throws Exception {
         final JobInfo jobInfo=new JobInfo(info.getJobNumber());
         // <app.dir>/jobs/<jobid>
-        final File appDir=FileUtil.getAppDir();
+        final File appDir=AppDirUtil.getAppDir();
         jobInfo.jobdir = new File(appDir, "jobs/" + info.getJobNumber());
         jobInfo.taskLsid=JobInfo.retrieveJobDetails(info.getBasicAuthHeader(), info.getGpServer(), info.getJobNumber());
         jobInfo.retrieveInputFileDetails(info);
@@ -152,7 +152,7 @@ public class JobInfo {
         final String cmdLine = preprocessCmdLine(libdir, commandLine);
 
         final String getTaskRESTCall = 
-                info.getGpServer() + JobInfo.REST_API_JOB_PATH  + "/" + info.getJobNumber() + "/visualizerCmdLine?commandline=" + VisualizerLauncher.encodeURIcomponent(cmdLine);
+                info.getGpServer() + JobInfo.REST_API_JOB_PATH  + "/" + info.getJobNumber() + "/visualizerCmdLine?commandline=" + Util.encodeURIcomponent(cmdLine);
         final String response = Util.doGetRequest(info.getBasicAuthHeader(), getTaskRESTCall);
 
         final JSONTokener tokener = new JSONTokener(response);
