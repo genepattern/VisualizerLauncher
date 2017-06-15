@@ -14,6 +14,9 @@
 
     # run visualizer launcher (for debugging, testing)
     mvn -q clean package exec:java
+    
+    # ... with a different user.data.dir
+    mvn  -Duser.data.dir="visualizerLauncher_data" -q clean package exec:java
 
     # run visualizer launcher with the java command
     java -jar launcher/${jarName}-full.jar
