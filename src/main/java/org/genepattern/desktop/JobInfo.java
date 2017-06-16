@@ -19,16 +19,31 @@ public class JobInfo {
     private static final Logger log = LogManager.getLogger(JobInfo.class);
     public static final String REST_API_JOB_PATH  = "/rest/v1/jobs";
     
-    public static JobInfo createFromJobId(final GpServerInfo info) throws Exception {
-        final JobInfo jobInfo=new JobInfo(info.getJobNumber());
-        // <app.dir>/jobs/<jobid>
+    /**
+     * Get the local directory for job input files,
+     *   default: <appDir>/jobs/<jobId>
+     * 
+     * @param jobId
+     * @return
+     */
+    public static File initLocalJobDir(final String jobId) {
         final File appDir=AppDirUtil.getAppDir();
-        jobInfo.jobdir = new File(appDir, "jobs/" + info.getJobNumber());
+        return initLocalJobDir(appDir, jobId);
+    }
+
+    protected static File initLocalJobDir(final File appDir, final String jobId) {
+        final File jobDir=new File(appDir, "jobs/" + jobId);
+        return jobDir;
+    }
+
+    public static JobInfo createFromJobId(final GpServerInfo info) throws Exception {
+        final File jobDir = initLocalJobDir(info.getJobNumber());
+        final JobInfo jobInfo=new JobInfo(info.getJobNumber(), jobDir);
         jobInfo.taskLsid=JobInfo.retrieveJobDetails(info.getBasicAuthHeader(), info.getGpServer(), info.getJobNumber());
         jobInfo.retrieveInputFileDetails(info);
         return jobInfo;
     }
-    
+
     // GET /rest/v1/jobs/{jobId}
     protected static String retrieveJobDetails(final String basicAuthHeader, final String gpServer, final String jobId) 
     throws Exception, JSONException {
@@ -43,13 +58,14 @@ public class JobInfo {
         return taskLsid;
     }
     
-    protected JobInfo(final String jobId) {
+    protected JobInfo(final String jobId, final File jobdir) {
         this.jobId=jobId;
+        this.jobdir=jobdir;
     }
     
     private final String jobId;
     private String taskLsid;
-    protected File jobdir;
+    private final File jobdir;
     private String[] commandLineLocal;
     protected boolean checkCache=true;
 
@@ -216,6 +232,7 @@ public class JobInfo {
     protected String substituteLocalFilePath(final String jobdirPath, final String cmdLineArgIn) {
         String cmdLineArg=cmdLineArgIn;
         for(final InputFileInfo inputFile : inputFiles) {
+            //TODO: bug fix final String arg=Pattern.quote(inputFile.getArg());
             final String arg=inputFile.getArg();
             final String localPath= jobdirPath + inputFile.getFilename();
             cmdLineArg=cmdLineArg.replaceAll(arg, localPath);
