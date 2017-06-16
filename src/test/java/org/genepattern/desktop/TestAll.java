@@ -2,6 +2,8 @@ package org.genepattern.desktop;
 
 import static org.junit.Assert.*;
 
+import java.io.File;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Ignore;
@@ -21,14 +23,19 @@ public class TestAll {
     
     public static final String GP_URL="https://genepattern.broadinstitute.org/gp";
     public static final String TEST_USER="test_user";
-    public static final String TEST_JOB="1";
+    public static final String TEST_JOB_ID="1";
+
+    // temp directory for testing
+    public static final File TEST_DIR=new File("test/tmp");
+    public static final File JOBS_DIR=new File(TEST_DIR, "jobs");
+    
     public static final GpServerInfo gpServerInfo=initGpServerInfo();
 
     public static GpServerInfo initGpServerInfo() {
         return new GpServerInfo.Builder()
                 .gpServer(GP_URL)
                 .user(TEST_USER)
-                .jobNumber(TEST_JOB)
+                .jobNumber(TEST_JOB_ID)
             .build();
     }
     
@@ -38,14 +45,6 @@ public class TestAll {
         }
     }
 
-    final String username="test_user";
-    final String password="test_password";
-    //final String gpServer="https://genepattern.broadinstitute.org/gp";
-    final String jobId="1472248";
-    // PredictionResultsViewer_v1 lsid
-    final String PRViewer_LSID=
-        "urn:lsid:broad.mit.edu:cancer.software.genepattern.module.visualizer:00019:1";
-    
     @Test
     public void test() {
         log.debug("testing");
@@ -69,6 +68,13 @@ public class TestAll {
      */
     @Ignore @Test
     public void testRetrieveJobDetails() { //throws Exception {
+        final String username="test_user";
+        final String password="test_password";
+        final String jobId="1472248";
+        // PredictionResultsViewer_v1 lsid
+        final String PRViewer_LSID=
+            "urn:lsid:broad.mit.edu:cancer.software.genepattern.module.visualizer:00019:1";
+
         final String basicAuthHeader=Util.initBasicAuthHeader(username, password);
         String actual="";
         try {

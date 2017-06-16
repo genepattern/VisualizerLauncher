@@ -1,21 +1,36 @@
 package org.genepattern.desktop;
 
-import static org.genepattern.desktop.TestAll.TEST_JOB;
+import static org.genepattern.desktop.TestAll.TEST_JOB_ID;
 import static org.genepattern.desktop.TestAll.gpServerInfo;
+import static org.genepattern.desktop.TestAll.JOBS_DIR;
+import static org.genepattern.desktop.TestAll.TEST_DIR;
 import static org.junit.Assert.assertEquals;
 
+import java.io.File;
+
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 
-public class TestJobUtil {
+public class TestJobInfo {
     private JobInfo jobInfo;
     
     @Before
     public void setUp() {
-        jobInfo=new JobInfo(TEST_JOB);
+        jobInfo=new JobInfo(TEST_JOB_ID, JOBS_DIR);
     }
     
+    @Test
+    public void initLocalJobDir() {
+        //tautological test
+        assertEquals("initLocalJobDir",
+            //expected
+            new File(TEST_DIR, "jobs/"+TEST_JOB_ID),
+            //actual
+            JobInfo.initLocalJobDir(TEST_DIR, TEST_JOB_ID));
+    }
+
     @Test
     public void addInputFile() {
         final String inputFile=gpServerInfo.getGpServer()+"/jobResults/123456/all%20aml%20test.gct";
@@ -70,10 +85,24 @@ public class TestJobUtil {
         assertEquals("skipping inputFile=''", 0,  jobInfo.getInputFiles().size());
     }
 
+    // special-case: null string
     @Test
     public void addInputFile_null() {
         jobInfo.addInputFile(gpServerInfo, (String)null);
         assertEquals("skipping inputFile=(null)", 0,  jobInfo.getInputFiles().size());
+    }
+    
+    // TODO: special-case: Windows file paths
+    @Ignore @Test
+    public void windows_test() {
+        jobInfo.addInputFile(gpServerInfo, "/gp/jobResults/123456/all_aml_test.gct");
+        InputFileInfo i=jobInfo.getInputFiles().get(0);
+        
+        assertEquals(
+            // expected
+            "-c"+jobInfo.getJobDir().getAbsolutePath()+File.separator+i.getFilename(),
+            // actual
+            i.replaceUrlWithLocalPath(jobInfo.getJobDir(), "-c"+i.getArg()));
     }
 
 }

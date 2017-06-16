@@ -1,12 +1,15 @@
 package org.genepattern.desktop;
 
+import static org.genepattern.desktop.TestAll.TEST_JOB_ID;
 import static org.junit.Assert.assertEquals;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -35,7 +38,7 @@ import org.junit.runners.Parameterized.Parameters;
  * @author pcarr
  */
 @RunWith(Parameterized.class)
-public class TestJobUtil_filepaths {
+public class TestJobInfo_filepaths {
     
     // gpServer variations
     public static final String[] gpUrls = {
@@ -143,6 +146,21 @@ public class TestJobUtil_filepaths {
             expectedFilepath,
             // actual
             inputFileInfo.getFilename());
+    }
+    
+    //TODO: figure out relative paths
+    @Ignore @Test
+    public void replaceUrlWithLocalPath() {
+        final File jobDir=new File(TEST_JOB_ID);
+        assertEquals("toLocalPath", 
+                TEST_JOB_ID+File.separator+inputFileInfo.getFilename(),
+                inputFileInfo.toLocalPath(jobDir));
+
+        assertEquals(
+            //expected
+            "-c"+TEST_JOB_ID+File.separator+inputFileInfo.getFilename(),
+            // actual
+            inputFileInfo.replaceUrlWithLocalPath(jobDir, "-c"+inputFileInfo.getArg()));
     }
 
 }
