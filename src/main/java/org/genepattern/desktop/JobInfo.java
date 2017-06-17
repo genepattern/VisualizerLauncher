@@ -217,27 +217,27 @@ public class JobInfo {
 
     protected String[] initCmdLineLocal(final GpServerInfo info, final JSONArray commandlineJson) {
         final String[] cmdLineLocal = asStringArray( commandlineJson );
-        substituteLocalFilePaths(info, cmdLineLocal);
-        return cmdLineLocal;
+        return substituteLocalFilePaths(info, cmdLineLocal);
     }
 
+    /**
+     * Process each commmand line arg, replace all input file urls with local file paths.
+     * 
+     * @param info
+     * @param cmdLineLocal
+     * @return
+     */
     protected String[] substituteLocalFilePaths(final GpServerInfo info, final String[] cmdLineLocal) {
-        final String jobdirPath=jobdir != null ? jobdir.getAbsolutePath() + "/" : "";
+        // for each cmd line arg ...
         for(int i=0; i< cmdLineLocal.length; i++) {
-            cmdLineLocal[i] = substituteLocalFilePath(jobdirPath, cmdLineLocal[i]);
+            String cmdLineArg=cmdLineLocal[i];
+            // for each input file ...
+            for(final InputFileInfo inputFile : inputFiles) {
+                cmdLineArg = inputFile.substituteLocalPath(cmdLineArg, jobdir);
+            }
+            cmdLineLocal[i] = cmdLineArg;
         }
         return cmdLineLocal;
-    }
-
-    protected String substituteLocalFilePath(final String jobdirPath, final String cmdLineArgIn) {
-        String cmdLineArg=cmdLineArgIn;
-        for(final InputFileInfo inputFile : inputFiles) {
-            //TODO: bug fix final String arg=Pattern.quote(inputFile.getArg());
-            final String arg=inputFile.getArg();
-            final String localPath= jobdirPath + inputFile.getFilename();
-            cmdLineArg=cmdLineArg.replaceAll(arg, localPath);
-        }
-        return cmdLineArg;
     }
 
 }

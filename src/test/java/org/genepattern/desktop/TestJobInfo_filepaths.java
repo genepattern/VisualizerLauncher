@@ -1,15 +1,12 @@
 package org.genepattern.desktop;
 
-import static org.genepattern.desktop.TestAll.TEST_JOB_ID;
 import static org.junit.Assert.assertEquals;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -81,6 +78,16 @@ public class TestJobInfo_filepaths {
             gpUrl + "/",
         };
     }
+    
+    // localPath variations, to simulate path to application directory,
+    //   aka 'app.dir' aka 'user.data.dir'
+    public static final String[] appDirPaths = {
+        null,
+        "", // empty string
+        "visualizerLauncher/", // relative path
+        // fq path to windows ('\\' is escape sequence for single '\')
+        "C:\\Users\\test_user\\AppData\\GenePattern\\VisualizerLauncher\\", 
+    };
 
     @Parameters(name="inputFile={2}")
     public static Collection<Object[]> data() {
@@ -92,10 +99,14 @@ public class TestJobInfo_filepaths {
                     final String[] urlPaths = initUrlPaths(user[1], filepath[1]);
                     for(final String link : links) {
                         for(final String urlPath : urlPaths) {
-                            final String inputFile=link + urlPath;
-                            final String expectedUrl = gpUrl + "/" + urlPath;
-                            final String expectedFilepath = filepath[0];
-                            testCases.add(new String[] { gpUrl, user[0], inputFile, expectedUrl, expectedFilepath });
+                            for(final String appDirPath : appDirPaths) {
+                                final String inputFile=link + urlPath;
+                                final String expectedUrl = gpUrl + "/" + urlPath;
+                                final String expectedFilepath = filepath[0];
+                                testCases.add(new String[] { 
+                                    gpUrl, user[0], inputFile, appDirPath, expectedUrl, expectedFilepath 
+                                });
+                            }
                         }
                     }
                 }
@@ -114,9 +125,12 @@ public class TestJobInfo_filepaths {
     public String inputFile="";
 
     @Parameter(3)
+    public String appDirPath;
+
+    @Parameter(4)
     public String expectedUrl="";
     
-    @Parameter(4)
+    @Parameter(5)
     public String expectedFilepath="";
 
     private InputFileInfo inputFileInfo;
@@ -133,10 +147,10 @@ public class TestJobInfo_filepaths {
     @Test
     public void initInputFileUrlStr() {
         assertEquals(
-                // expected
-                expectedUrl, 
-                // actual
-                inputFileInfo.getUrl());
+            // expected
+            expectedUrl, 
+            // actual
+            inputFileInfo.getUrl());
     }
 
     @Test
@@ -148,19 +162,30 @@ public class TestJobInfo_filepaths {
             inputFileInfo.getFilename());
     }
     
-    //TODO: figure out relative paths
-    @Ignore @Test
-    public void replaceUrlWithLocalPath() {
-        final File jobDir=new File(TEST_JOB_ID);
-        assertEquals("toLocalPath", 
-                TEST_JOB_ID+File.separator+inputFileInfo.getFilename(),
-                inputFileInfo.toLocalPath(jobDir));
-
-        assertEquals(
-            //expected
-            "-c"+TEST_JOB_ID+File.separator+inputFileInfo.getFilename(),
+    @Test
+    public void substituteLocalPath() {
+        final String localPath;
+        if (Util.isNullOrEmpty(appDirPath)) {
+            localPath=inputFileInfo.getFilename();
+        }
+        else {
+            localPath=appDirPath+inputFileInfo.getFilename();
+        }
+        assertEquals("localPath",
+            // expected
+            localPath,
             // actual
-            inputFileInfo.replaceUrlWithLocalPath(jobDir, "-c"+inputFileInfo.getArg()));
+            inputFileInfo.substituteLocalPath(inputFileInfo.getArg(), localPath));
+        assertEquals("localPath with '-c' arg",
+            // expected
+            "-c"+localPath,
+            // actual
+            inputFileInfo.substituteLocalPath("-c"+inputFileInfo.getArg(), localPath));
+        assertEquals("localPath with '--inputFile=' arg",
+                // expected
+                "--inputFile="+localPath,
+                // actual
+                inputFileInfo.substituteLocalPath("--inputFile="+inputFileInfo.getArg(), localPath));
     }
 
 }
