@@ -22,6 +22,11 @@ public class LogUtil {
         initLogging();
         return LogManager.getLogger(clazz);
     }
+    
+    public static boolean isPropertySet(final String key) {
+        final String val=System.getProperty(key);
+        return val != null && val.trim().length()>0;
+    }
 
     /**
      * Set the log4j2 log directory at application startup, so that log files
@@ -35,6 +40,10 @@ public class LogUtil {
      * the initialization-on-demand idiom.
      */
     private static void _initLogging() {
+        // special-case: short-circuit if 'log.dir' is already set
+        if (isPropertySet(PROP_LOG_DIR)) {
+            return;
+        }
         try {
             final File logDir=new File(AppDirUtil.getAppDir(), "logs");
             System.setProperty(PROP_LOG_DIR, logDir.getAbsolutePath());
