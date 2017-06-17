@@ -3,6 +3,8 @@ package org.genepattern.desktop;
 import java.io.File;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import net.harawata.appdirs.AppDirs;
 import net.harawata.appdirs.AppDirsFactory;
@@ -68,7 +70,9 @@ public class AppDirUtil {
         userDataDir=userDataDir.trim();
         try {
             if (userDataDir.startsWith("~")) {
-                userDataDir=userDataDir.replaceFirst("~", System.getProperty("user.home"));
+                userDataDir=userDataDir.replaceFirst(
+                        Pattern.quote("~"), 
+                        Matcher.quoteReplacement(System.getProperty("user.home")));
             }
             final Path path=FileSystems.getDefault().getPath(userDataDir).toAbsolutePath().normalize();
             return path.toAbsolutePath().normalize().toFile();
@@ -82,15 +86,6 @@ public class AppDirUtil {
 
     protected static File getAppDir_working_dir() {
         return new File("visualizerLauncher");
-    }
-
-    /**
-     * Get the download location relative to the user.home directory:
-     *     <user.home>/Library/visualizerLauncher/GenePattern_<jobNumber>
-     */
-    protected static File getAppDir_user_home() {
-        final File home_dir=new File(System.getProperty("user.home"));
-        return new File(home_dir, "Library/visualizerLauncher");
     }
 
 }
