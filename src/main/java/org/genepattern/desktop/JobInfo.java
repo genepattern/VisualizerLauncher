@@ -47,7 +47,7 @@ public class JobInfo {
     // GET /rest/v1/jobs/{jobId}
     protected static String retrieveJobDetails(final String basicAuthHeader, final String gpServer, final String jobId) 
     throws Exception, JSONException {
-        final String response = Util.doGetRequest(basicAuthHeader, 
+        final String response = Util.doGetRequest(log, basicAuthHeader, 
             gpServer + REST_API_JOB_PATH + "/" + jobId);
         log.trace(response);
         final JSONObject root = new JSONObject(response);
@@ -85,7 +85,7 @@ public class JobInfo {
     
     // GET /rest/v1/jobs/{jobId}/visualizerInputFiles
     public void retrieveInputFileDetails(final GpServerInfo info) throws Exception {
-        final String inputFilesJson = Util.doGetRequest(
+        final String inputFilesJson = Util.doGetRequest(log,
                 info.getBasicAuthHeader(), 
                 info.getGpServer() + REST_API_JOB_PATH  + "/" + jobId + "/visualizerInputFiles");
         if (log.isTraceEnabled()) {
@@ -169,7 +169,7 @@ public class JobInfo {
 
         final String getTaskRESTCall = 
                 info.getGpServer() + JobInfo.REST_API_JOB_PATH  + "/" + info.getJobNumber() + "/visualizerCmdLine?commandline=" + Util.encodeURIcomponent(cmdLine);
-        final String response = Util.doGetRequest(info.getBasicAuthHeader(), getTaskRESTCall);
+        final String response = Util.doGetRequest(log, info.getBasicAuthHeader(), getTaskRESTCall);
 
         final JSONTokener tokener = new JSONTokener(response);
         final JSONObject root = new JSONObject(tokener);

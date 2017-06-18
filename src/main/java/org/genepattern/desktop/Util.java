@@ -13,14 +13,12 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
  * Created by nazaire on 4/6/16.
  */
 public class Util {
-    private static final Logger log = LogManager.getLogger(Util.class);
     
     public static boolean isNullOrEmpty(final String str) {
         return (str==null || str.length()==0);
@@ -60,7 +58,7 @@ public class Util {
         return "Basic " + new String(authEncBytes);
     }
 
-    protected static String doGetRequest(final String basicAuthHeader, final String fromUrl) throws IOException
+    protected static String doGetRequest(final Logger log, final String basicAuthHeader, final String fromUrl) throws IOException
     {
         final CloseableHttpClient httpClient = HttpClientBuilder.create().build();
         try {
@@ -68,7 +66,7 @@ public class Util {
             if (!isNullOrEmpty(basicAuthHeader)) {
                 httpget.setHeader("Authorization", basicAuthHeader);
             }
-            if (log.isDebugEnabled()) {
+            if (log != null && log.isDebugEnabled()) {
                 log.debug("Executing request " + httpget.getRequestLine());
             }
 
@@ -77,7 +75,7 @@ public class Util {
                 @Override
                 public String handleResponse(final HttpResponse response) throws ClientProtocolException, IOException { 
                     final int status = response.getStatusLine().getStatusCode();
-                    if (log.isDebugEnabled()) {
+                    if (log != null && log.isDebugEnabled()) {
                         log.debug("response: "+response.getStatusLine());
                     }
                     if (status >= 200 && status < 300) {

@@ -26,7 +26,7 @@ public class TaskInfo {
         final String getTaskRESTCall = 
                 info.getGpServer() + "/rest/v1/tasks/" + taskLsid + "?includeSupportFiles=true";
         final String response =
-                Util.doGetRequest(info.getBasicAuthHeader(), getTaskRESTCall);
+                Util.doGetRequest(log, info.getBasicAuthHeader(), getTaskRESTCall);
         return new JSONObject(response);
     }
     
