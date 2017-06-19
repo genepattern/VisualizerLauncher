@@ -29,12 +29,12 @@ public class InputFileInfo {
     }
 
     /** helper method because String#replaceFirst expects a regex */
-    protected static String replaceFirst_quoted(final String str, final String arg, final String replacement) {
+    protected static String replaceFirst_quoted(final String str, final String literal, final String replacement) {
         if (Util.isNullOrEmpty(str)) {
             return str;
         }
         return str.replaceFirst(
-                Pattern.quote(arg),
+                Pattern.quote(literal),
                 Matcher.quoteReplacement(replacement));
     }
 
@@ -63,7 +63,7 @@ public class InputFileInfo {
     protected static String prependGpUrl(final GpServerInfo info, final String inputFile) {
         if (inputFile.startsWith("/gp/")) {
             // e.g. gpServer=http://127.0.0.1:8080/gp
-            return inputFile.replaceFirst("/gp", info.getGpServer());
+            return replaceFirst_quoted(inputFile, "/gp", info.getGpServer());
         }
         else {
             return inputFile;
