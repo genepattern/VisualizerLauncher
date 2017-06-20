@@ -13,13 +13,22 @@
     mvn package
 
     # run visualizer launcher (for debugging, testing)
-    mvn -q clean package exec:java
+    mvn -q clean package exec:exec
+
+    # application data are saved in the build directory
+    #   ./target/app-data
+    # which is deleted when 'mvn clean' is called
     
-    # ... with a different user.data.dir
-    mvn  -Duser.data.dir="visualizerLauncher_data" -q clean package exec:java
+    # 'exec:java' is configured to save application data in the working directory
+    #   ./app-data
+    # this is not deleted 
+    mvn package exec:java
+    
+    # use a different data directory ...
+    mvn -Duser.data.dir="app-data" package exec:exec
 
     # run visualizer launcher with the java command
-    java -jar launcher/${jarName}-full.jar
+    java -jar target/visualizerLauncher-{version}-full.jar
       
     # use a different certificate ...
     mvn -Dsignjar.keystore=${HOME}/.gp_build/genepattern-codesign.jks
@@ -48,8 +57,6 @@
     <maven.compiler.target>1.8</maven.compiler.target>
     <maven.build.timestamp.format>yyyy-MM-dd-HHmmss</maven.build.timestamp.format>
 
-    <mainClass>org.genepattern.desktop.VisualizerLauncher</mainClass>
-    <exec.mainClass>${mainClass}</exec.mainClass>
     <!-- jarName>${project.artifactId}-${project.version}-b${buildNumber}</jarName -->
     <jarName>${project.artifactId}-${project.version}</jarName>
     <!-- the signed executable jar file, includes all dependencies -->
@@ -63,6 +70,14 @@
     <signjar.dname>CN=GenePattern, OU=Cancer Genomics, O=Broad Institute, L=Cambridge, S=MA, C=US, EMAILADDRESS=gp-help@broadinstitute.org</signjar.dname>
     <signjar.tsaurl>http://timestamp.comodoca.com/rfc3161</signjar.tsaurl>
     
+    <!-- command line execution -->
+    <mainClass>org.genepattern.desktop.VisualizerLauncher</mainClass>
+    <exec.workingdir>${project.build.directory}</exec.workingdir>
+    <user.data.dir>app-data</user.data.dir>
+    <exec.mainClass>${mainClass}</exec.mainClass>
+    <exec.executable>java</exec.executable>
+    <exec.args>-Duser.data.dir=${user.data.dir} -jar ${jarFile}</exec.args>
+
     <!-- debugging -->
     <verbose>false</verbose>
   </properties>
@@ -302,14 +317,13 @@
         <artifactId>exec-maven-plugin</artifactId>
         <version>1.6.0</version>
         <configuration>
-          <!-- Example: set system property for exec
           <systemProperties>
             <systemProperty>
+              <!-- set -Duser.data.dir for exec:java -->
               <key>user.data.dir</key>
-              <value>test</value>
+              <value>${user.data.dir}</value>
             </systemProperty>
           </systemProperties>
-          -->
         </configuration>
       </plugin>
 
