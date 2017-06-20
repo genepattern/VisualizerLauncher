@@ -15,17 +15,13 @@
     # run visualizer launcher (for debugging, testing)
     mvn -q clean package exec:exec
 
-    # application data are saved in the build directory
-    #   ./target/app-data
-    # which is deleted when 'mvn clean' is called
-    
-    # 'exec:java' is configured to save application data in the working directory
-    #   ./app-data
-    # this is not deleted 
-    mvn package exec:java
-    
-    # use a different data directory ...
-    mvn -Duser.data.dir="app-data" package exec:exec
+    # application data are downloaded to the project directory
+    mvn package exec:exec, uses ./target/appdata, which is deleted on 'mvn clean;
+    mvn package exec:java, uses ./appdata, which is not deleted
+    # use a custom path ...
+    mvn -Duser.data.dir=appdata package exec:java
+    mvn -Duser.data.dir=appdata package exec:exec
+    mvn -Duser.data.dir=/fq/path package exec:exec
 
     # run visualizer launcher with the java command
     java -jar target/visualizerLauncher-{version}-full.jar
@@ -73,7 +69,7 @@
     <!-- command line execution -->
     <mainClass>org.genepattern.desktop.VisualizerLauncher</mainClass>
     <exec.workingdir>${project.build.directory}</exec.workingdir>
-    <user.data.dir>app-data</user.data.dir>
+    <user.data.dir>appdata</user.data.dir>
     <exec.mainClass>${mainClass}</exec.mainClass>
     <exec.executable>java</exec.executable>
     <exec.args>-Duser.data.dir=${user.data.dir} -jar ${jarFile}</exec.args>
