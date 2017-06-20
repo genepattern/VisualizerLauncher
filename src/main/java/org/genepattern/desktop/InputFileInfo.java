@@ -127,14 +127,12 @@ public class InputFileInfo {
      *     path to the job input files
      */
     protected String toLocalPath(final File parentDir) {
-        if (parentDir==null) {
+        if (GpServerInfo.isNullOrEmpty(parentDir)) {
             // ignore
             return filename;
         }
         else {
-            //TODO: handle relative path
-            //  return new File(parentDir, filename).getPath();
-            return new File(parentDir, filename).getAbsolutePath();
+            return new File(parentDir, filename).toPath().normalize().toString();
         }
     }
     

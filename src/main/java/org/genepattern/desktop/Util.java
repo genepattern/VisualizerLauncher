@@ -33,6 +33,11 @@ public class Util {
         }
     }
 
+    public static boolean isPropertySet(final String key) {
+        final String val=System.getProperty(key);
+        return val != null && val.trim().length()>0;
+    }
+
     /** Converts a string into something you can safely insert into a URL. */
     @SuppressWarnings("deprecation")
     public static String encodeURIcomponent(final String str) {

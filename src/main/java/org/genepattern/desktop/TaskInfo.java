@@ -61,8 +61,7 @@ public class TaskInfo {
         }
         
         // <app.dir>/taskLib/<task.name>_v<task.version>/
-        final File appDir=AppDirUtil.getAppDir();
-        taskInfo.libdir=new File(appDir, "taskLib/"+taskInfo.name+"_v"+taskInfo.version);
+        taskInfo.libdir=info.getDataDir("taskLib/"+taskInfo.name+"_v"+taskInfo.version);
         return taskInfo;
     }
     

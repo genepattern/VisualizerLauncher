@@ -25,7 +25,7 @@ public class TestJobInfo_commandline {
     // default inputFile url
     private String inputFile=GP_URL+"/jobResults/1/all_aml_test.gct";
     // default local file path
-    private String localPath=new File(jobdir, "all_aml_test.gct").getAbsolutePath();
+    private String localPath=new File(jobdir, "all_aml_test.gct").getPath();
 
     @Before
     public void setUp() {
@@ -49,7 +49,7 @@ public class TestJobInfo_commandline {
     @Test
     public void inputFile_asArg_special_char() {
         inputFile=GP_URL+"/jobResults/1/all%20aml%20test.gct";
-        localPath=new File(jobdir, "all aml test.gct").getAbsolutePath();
+        localPath=new File(jobdir, "all aml test.gct").getPath();
         jobInfo.addInputFile(info, inputFile);
         String[] cmdIn={ "java", inputFile };
         String[] cmdOut=jobInfo.substituteLocalFilePaths(info, cmdIn);

@@ -19,25 +19,8 @@ public class JobInfo {
     private static final Logger log = LogManager.getLogger(JobInfo.class);
     public static final String REST_API_JOB_PATH  = "/rest/v1/jobs";
     
-    /**
-     * Get the local directory for job input files,
-     *   default: <appDir>/jobs/<jobId>
-     * 
-     * @param jobId
-     * @return
-     */
-    public static File initLocalJobDir(final String jobId) {
-        final File appDir=AppDirUtil.getAppDir();
-        return initLocalJobDir(appDir, jobId);
-    }
-
-    protected static File initLocalJobDir(final File appDir, final String jobId) {
-        final File jobDir=new File(appDir, "jobs/" + jobId);
-        return jobDir;
-    }
-
     public static JobInfo createFromJobId(final GpServerInfo info) throws Exception {
-        final File jobDir = initLocalJobDir(info.getJobNumber());
+        final File jobDir = info.getLocalJobDir();
         final JobInfo jobInfo=new JobInfo(info.getJobNumber(), jobDir);
         jobInfo.taskLsid=JobInfo.retrieveJobDetails(info.getBasicAuthHeader(), info.getGpServer(), info.getJobNumber());
         jobInfo.retrieveInputFileDetails(info);

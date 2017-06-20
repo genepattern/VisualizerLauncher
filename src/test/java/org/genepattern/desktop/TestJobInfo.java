@@ -1,17 +1,19 @@
 package org.genepattern.desktop;
 
 import static org.genepattern.desktop.TestAll.TEST_JOB_ID;
+import static org.genepattern.desktop.TestAll.TEST_USER;
 import static org.genepattern.desktop.TestAll.gpServerInfo;
+import static org.genepattern.desktop.TestAll.GP_URL;
 import static org.genepattern.desktop.TestAll.JOBS_DIR;
 import static org.genepattern.desktop.TestAll.TEST_DIR;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
-
 
 public class TestJobInfo {
     private JobInfo jobInfo;
@@ -20,15 +22,62 @@ public class TestJobInfo {
     public void setUp() {
         jobInfo=new JobInfo(TEST_JOB_ID, JOBS_DIR);
     }
-    
+
+    protected GpServerInfo.Builder builderForTest() {
+        return new GpServerInfo.Builder()
+            .gpServer(GP_URL)
+            .user(TEST_USER)
+            .jobNumber(TEST_JOB_ID);
+    }
+
+    @Test
+    public void initAppDir() {
+        // when property is not set ... 
+    }
+
     @Test
     public void initLocalJobDir() {
-        //tautological test
+        assertEquals("localJobDir, appDir=null",
+                //expected
+                new File("jobs/"+TEST_JOB_ID),
+                //actual
+                builderForTest().appDir(null).build().getLocalJobDir());
+
+        assertEquals("localJobDir, appDir='.'",
+                //expected
+                new File("jobs/"+TEST_JOB_ID),
+                //actual
+                builderForTest().appDir(new File(".")).build().getLocalJobDir());
+
+        assertEquals("localJobDir, appDir='./'",
+                //expected
+                new File("jobs/"+TEST_JOB_ID),
+                //actual
+                builderForTest().appDir(new File("./")).build().getLocalJobDir());
+
+        assertEquals("localJobDir, appDir=''",
+                //expected
+                new File("jobs/"+TEST_JOB_ID),
+                //actual
+                builderForTest().appDir(new File("")).build().getLocalJobDir());
+
+        assertEquals("localJobDir, appDir='appdata'",
+                //expected
+                new File("appdata/jobs/"+TEST_JOB_ID),
+                //actual
+                builderForTest().appDir(new File("appdata")).build().getLocalJobDir());
+
+        assertEquals("localJobDir, appDir='./appdata'",
+                //expected
+                new File("appdata/jobs/"+TEST_JOB_ID),
+                //actual
+                builderForTest().appDir(new File("./appdata")).build().getLocalJobDir());
+
         assertEquals("initLocalJobDir",
             //expected
             new File(TEST_DIR, "jobs/"+TEST_JOB_ID),
             //actual
-            JobInfo.initLocalJobDir(TEST_DIR, TEST_JOB_ID));
+            builderForTest().appDir(TEST_DIR).build().getLocalJobDir());
     }
 
     @Test
@@ -90,19 +139,6 @@ public class TestJobInfo {
     public void addInputFile_null() {
         jobInfo.addInputFile(gpServerInfo, (String)null);
         assertEquals("skipping inputFile=(null)", 0,  jobInfo.getInputFiles().size());
-    }
-    
-    // TODO: special-case: Windows file paths
-    @Ignore @Test
-    public void windows_test() {
-        jobInfo.addInputFile(gpServerInfo, "/gp/jobResults/123456/all_aml_test.gct");
-        InputFileInfo i=jobInfo.getInputFiles().get(0);
-        
-        assertEquals(
-            // expected
-            "-c"+jobInfo.getJobDir().getAbsolutePath()+File.separator+i.getFilename(),
-            // actual
-            i.replaceUrlWithLocalPath(jobInfo.getJobDir(), "-c"+i.getArg()));
     }
 
 }
