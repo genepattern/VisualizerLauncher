@@ -20,19 +20,17 @@ public class JobInfo {
     public static final String REST_API_JOB_PATH  = "/rest/v1/jobs";
     
     public static JobInfo createFromJobId(final GpServerInfo info) throws Exception {
-        final JobInfo jobInfo=new JobInfo(info.getJobNumber());
-        // <app.dir>/jobs/<jobid>
-        final File appDir=AppDirUtil.getAppDir();
-        jobInfo.jobdir = new File(appDir, "jobs/" + info.getJobNumber());
+        final File jobDir = info.getLocalJobDir();
+        final JobInfo jobInfo=new JobInfo(info.getJobNumber(), jobDir);
         jobInfo.taskLsid=JobInfo.retrieveJobDetails(info.getBasicAuthHeader(), info.getGpServer(), info.getJobNumber());
         jobInfo.retrieveInputFileDetails(info);
         return jobInfo;
     }
-    
+
     // GET /rest/v1/jobs/{jobId}
     protected static String retrieveJobDetails(final String basicAuthHeader, final String gpServer, final String jobId) 
     throws Exception, JSONException {
-        final String response = Util.doGetRequest(basicAuthHeader, 
+        final String response = Util.doGetRequest(log, basicAuthHeader, 
             gpServer + REST_API_JOB_PATH + "/" + jobId);
         log.trace(response);
         final JSONObject root = new JSONObject(response);
@@ -43,13 +41,14 @@ public class JobInfo {
         return taskLsid;
     }
     
-    protected JobInfo(final String jobId) {
+    protected JobInfo(final String jobId, final File jobdir) {
         this.jobId=jobId;
+        this.jobdir=jobdir;
     }
     
     private final String jobId;
     private String taskLsid;
-    protected File jobdir;
+    private final File jobdir;
     private String[] commandLineLocal;
     protected boolean checkCache=true;
 
@@ -69,7 +68,7 @@ public class JobInfo {
     
     // GET /rest/v1/jobs/{jobId}/visualizerInputFiles
     public void retrieveInputFileDetails(final GpServerInfo info) throws Exception {
-        final String inputFilesJson = Util.doGetRequest(
+        final String inputFilesJson = Util.doGetRequest(log,
                 info.getBasicAuthHeader(), 
                 info.getGpServer() + REST_API_JOB_PATH  + "/" + jobId + "/visualizerInputFiles");
         if (log.isTraceEnabled()) {
@@ -153,7 +152,7 @@ public class JobInfo {
 
         final String getTaskRESTCall = 
                 info.getGpServer() + JobInfo.REST_API_JOB_PATH  + "/" + info.getJobNumber() + "/visualizerCmdLine?commandline=" + Util.encodeURIcomponent(cmdLine);
-        final String response = Util.doGetRequest(info.getBasicAuthHeader(), getTaskRESTCall);
+        final String response = Util.doGetRequest(log, info.getBasicAuthHeader(), getTaskRESTCall);
 
         final JSONTokener tokener = new JSONTokener(response);
         final JSONObject root = new JSONObject(tokener);
@@ -201,26 +200,27 @@ public class JobInfo {
 
     protected String[] initCmdLineLocal(final GpServerInfo info, final JSONArray commandlineJson) {
         final String[] cmdLineLocal = asStringArray( commandlineJson );
-        substituteLocalFilePaths(info, cmdLineLocal);
-        return cmdLineLocal;
+        return substituteLocalFilePaths(info, cmdLineLocal);
     }
 
+    /**
+     * Process each commmand line arg, replace all input file urls with local file paths.
+     * 
+     * @param info
+     * @param cmdLineLocal
+     * @return
+     */
     protected String[] substituteLocalFilePaths(final GpServerInfo info, final String[] cmdLineLocal) {
-        final String jobdirPath=jobdir != null ? jobdir.getAbsolutePath() + "/" : "";
+        // for each cmd line arg ...
         for(int i=0; i< cmdLineLocal.length; i++) {
-            cmdLineLocal[i] = substituteLocalFilePath(jobdirPath, cmdLineLocal[i]);
+            String cmdLineArg=cmdLineLocal[i];
+            // for each input file ...
+            for(final InputFileInfo inputFile : inputFiles) {
+                cmdLineArg = inputFile.substituteLocalPath(cmdLineArg, jobdir);
+            }
+            cmdLineLocal[i] = cmdLineArg;
         }
         return cmdLineLocal;
-    }
-
-    protected String substituteLocalFilePath(final String jobdirPath, final String cmdLineArgIn) {
-        String cmdLineArg=cmdLineArgIn;
-        for(final InputFileInfo inputFile : inputFiles) {
-            final String arg=inputFile.getArg();
-            final String localPath= jobdirPath + inputFile.getFilename();
-            cmdLineArg=cmdLineArg.replaceAll(arg, localPath);
-        }
-        return cmdLineArg;
     }
 
 }

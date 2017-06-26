@@ -1,5 +1,7 @@
 package org.genepattern.desktop;
 
+import static org.genepattern.desktop.TestAll.GP_URL;
+import static org.genepattern.desktop.TestAll.JOBS_DIR;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
@@ -8,18 +10,14 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Test cases for JobUtil prepareCommandLine
+ * Test cases for JobInfo prepareCommandLine
  * 
  * @author pcarr
  */
-public class TestJobUtil_commandline {
-    public static final String GP_URL="https://genepattern.broadinstitute.org/gp";
+public class TestJobInfo_commandline {
 
-    // temp directory for testing
-    static final File test_dir=new File("test/tmp");
-    static final File jobs_dir=new File(test_dir, "jobs");
     static final String jobId="1";
-    static final File jobdir=new File(jobs_dir, jobId);
+    static final File jobdir=new File(JOBS_DIR, jobId);
     static final String user="test";
     
     private GpServerInfo info;
@@ -27,7 +25,7 @@ public class TestJobUtil_commandline {
     // default inputFile url
     private String inputFile=GP_URL+"/jobResults/1/all_aml_test.gct";
     // default local file path
-    private String localPath=new File(jobdir, "all_aml_test.gct").getAbsolutePath();
+    private String localPath=new File(jobdir, "all_aml_test.gct").getPath();
 
     @Before
     public void setUp() {
@@ -36,8 +34,7 @@ public class TestJobUtil_commandline {
             .user(user)
             .jobNumber(jobId)
         .build();
-        jobInfo=new JobInfo(jobId);
-        jobInfo.jobdir=jobdir;
+        jobInfo=new JobInfo(jobId, jobdir);
     }
 
     @Test
@@ -52,7 +49,7 @@ public class TestJobUtil_commandline {
     @Test
     public void inputFile_asArg_special_char() {
         inputFile=GP_URL+"/jobResults/1/all%20aml%20test.gct";
-        localPath=new File(jobdir, "all aml test.gct").getAbsolutePath();
+        localPath=new File(jobdir, "all aml test.gct").getPath();
         jobInfo.addInputFile(info, inputFile);
         String[] cmdIn={ "java", inputFile };
         String[] cmdOut=jobInfo.substituteLocalFilePaths(info, cmdIn);
@@ -62,8 +59,7 @@ public class TestJobUtil_commandline {
     // test 2: '-c<inputFile>' 
     @Test
     public void arg_with_flag() {
-        JobInfo jobInfo=new JobInfo(jobId);
-        jobInfo.jobdir=jobdir;
+        JobInfo jobInfo=new JobInfo(jobId, jobdir);
         jobInfo.addInputFile(info, inputFile);
         final String[] cmdIn={ "java", "-c"+inputFile };
         String[] cmdOut=jobInfo.substituteLocalFilePaths(info, cmdIn);

@@ -11,16 +11,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Utility class for local file management.
+ * Helper class for downloading files from the GP server to the local
+ * file system.
  * 
- * By default data files are saved via the AppDirs framework into this location:
- *   On Mac OS X:   /Users/<Account>/Library/Application Support/VisualizerLauncher
- *   On Windows XP: C:\Documents and Settings\<Account>\Application Data\Local Settings\GenePattern\VisualizerLauncher
- *   On Windows 7:  C:\Users\<Account>\AppData\GenePattern\VisualizerLauncher
- *   On Unix/Linux: /home/<account>/.local/share/VisualizerLauncher
- * <AppAuthor> - GenePattern
- * <AppName>   - VisualizerLauncher 
- *   
  * @author pcarr
  */
 public class FileUtil {

@@ -1,6 +1,6 @@
 package org.genepattern.desktop;
 
-import static org.genepattern.desktop.AppDirUtil.PROP_USER_DATA_DIR;
+import static org.genepattern.desktop.VisualizerLauncher.PROP_USER_DATA_DIR;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
@@ -43,19 +43,20 @@ public class TestAppDirUtil {
 
     @Parameters(name="-Duser.data.dir=\"{0}\"")
     public static Collection<Object[]> data() throws IOException {
-        final File cwd=new File(".").getCanonicalFile();
         final File home=new File(System.getProperty("user.home")).getCanonicalFile();
         return Arrays.asList(new Object[][] {
             // not set
             { null, AppDirUtil.getAppDir_standard() },
             // relative directory
-            { "visualizerLauncher", new File(cwd, "visualizerLauncher") },
-            { "./visualizerLauncher", new File(cwd, "visualizerLauncher") },
+            { "visualizerLauncher", new File("visualizerLauncher") },
+            { "./visualizerLauncher", new File("visualizerLauncher") },
+            { "."+File.separator+"visualizerLauncher", new File("visualizerLauncher") },
             // current working directory aliases
-            { "", cwd },
-            { " ", cwd },
-            { ".", cwd },
-            { "./", cwd },
+            { "", null },
+            { " ", null },
+            { ".", null },
+            { "./", null },
+            { "."+File.separator, null },
             // home directory aliases
             { "~", home },
             { "~/", home },
@@ -70,10 +71,10 @@ public class TestAppDirUtil {
     public File expectedFile;
     
     @Test
-    public void getAppDir() {
+    public void initAppDir() {
         assertEquals("getAppDir()", 
             expectedFile, 
-            AppDirUtil.getAppDir());
+            AppDirUtil.initAppDir(userDataDir));
     }
 
     @Test

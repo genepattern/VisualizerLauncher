@@ -1,6 +1,9 @@
 package org.genepattern.desktop;
 
+import java.io.File;
 import java.net.URL;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,6 +17,27 @@ import org.apache.logging.log4j.Logger;
 public class InputFileInfo {
     private static final Logger log = LogManager.getLogger(InputFileInfo.class);
     
+    /** helper method because String#replaceAll expects a regex */
+    protected static String replaceAll_quoted(final String str, final String literal, final String replacement) {
+        if (Util.isNullOrEmpty(str)) {
+            return str;
+        }
+        return str.replaceAll(
+            Pattern.quote(literal),
+            Matcher.quoteReplacement(replacement)
+        );
+    }
+
+    /** helper method because String#replaceFirst expects a regex */
+    protected static String replaceFirst_quoted(final String str, final String literal, final String replacement) {
+        if (Util.isNullOrEmpty(str)) {
+            return str;
+        }
+        return str.replaceFirst(
+                Pattern.quote(literal),
+                Matcher.quoteReplacement(replacement));
+    }
+
     /**
      * Substitute '<GenePatternURL>' if necessary. 
      * Special case for a visualizer in a pipeline. E.g.
@@ -21,10 +45,10 @@ public class InputFileInfo {
      */
     protected static String substituteGpUrl(final GpServerInfo info, final String inputFile) {
         if (inputFile.startsWith("<GenePatternURL>/")) {
-            return inputFile.replaceFirst("<GenePatternURL>/", info.getGpServer()+"/");
+            return replaceFirst_quoted(inputFile, "<GenePatternURL>/", info.getGpServer()+"/");
         }
         else if (inputFile.startsWith("<GenePatternURL>")) {
-            return inputFile.replaceFirst("<GenePatternURL>", info.getGpServer()+"/");
+            return replaceFirst_quoted(inputFile, "<GenePatternURL>", info.getGpServer()+"/");
         }
         else {
             return inputFile;
@@ -39,7 +63,7 @@ public class InputFileInfo {
     protected static String prependGpUrl(final GpServerInfo info, final String inputFile) {
         if (inputFile.startsWith("/gp/")) {
             // e.g. gpServer=http://127.0.0.1:8080/gp
-            return inputFile.replaceFirst("/gp", info.getGpServer());
+            return replaceFirst_quoted(inputFile, "/gp", info.getGpServer());
         }
         else {
             return inputFile;
@@ -92,6 +116,37 @@ public class InputFileInfo {
 
     public String getFilename() {
         return filename;
+    }
+    
+    /**
+     * Get the local path to this inputFile
+     * 
+     *   <parentDir>/filename
+     *   
+     * @param parentDir, the local parent directory for example the local
+     *     path to the job input files
+     */
+    protected String toLocalPath(final File parentDir) {
+        if (GpServerInfo.isNullOrEmpty(parentDir)) {
+            // ignore
+            return filename;
+        }
+        else {
+            return new File(parentDir, filename).toPath().normalize().toString();
+        }
+    }
+    
+    /**
+     * Substitute the inputFile url with the local file path to
+     * the given parent directory.
+     */
+    public String substituteLocalPath(final String cmdLineArg, final File parentDir) {
+        final String localPath=toLocalPath(parentDir);
+        return substituteLocalPath(cmdLineArg, localPath);
+    }
+
+    protected String substituteLocalPath(final String cmdLineArg, final String localPath) {
+        return replaceAll_quoted(cmdLineArg, arg, localPath);
     }
 
 }

@@ -7,6 +7,7 @@ import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -35,18 +36,21 @@ import org.apache.logging.log4j.core.config.LoggerConfig;
  * Created by nazaire on 4/3/16.
  */
 public class VisualizerLauncherGui {
-    private static final Logger log = LogUtil.getLogger(VisualizerLauncherGui.class);
-    
     private JFrame frame;
     private JTextField serverField;
     private JTextField usernameField;
     private JPasswordField passwordField;
     private JTextField jobNumberField;
     private JLabel statusMsgField;
-    
-    private GpServerInfo info;
 
-    VisualizerLauncherGui() {
+    private final File appDir;
+    private GpServerInfo info;
+    
+    private final Logger log;
+
+    VisualizerLauncherGui(final File appDir) {
+        this.appDir=appDir;
+        this.log=LogManager.getLogger(VisualizerLauncherGui.class);
     }
 
     private void run() {
@@ -121,6 +125,7 @@ public class VisualizerLauncherGui {
                     .user(userName)
                     .pass(String.valueOf(password))
                     .jobNumber(jobNumber)
+                    .appDir(appDir)
                 .build();
 
                 //setup location of log files
@@ -232,8 +237,8 @@ public class VisualizerLauncherGui {
                 null, scrollPane, type, JOptionPane.ERROR_MESSAGE);
     }
 
-    protected static void createAndShowGUI() {
-        VisualizerLauncherGui dsLauncher = new VisualizerLauncherGui();
+    protected static void createAndShowGUI(final File appDir) {
+        VisualizerLauncherGui dsLauncher = new VisualizerLauncherGui(appDir);
         dsLauncher.run();
     }
 

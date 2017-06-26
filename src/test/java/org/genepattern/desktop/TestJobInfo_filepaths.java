@@ -35,7 +35,7 @@ import org.junit.runners.Parameterized.Parameters;
  * @author pcarr
  */
 @RunWith(Parameterized.class)
-public class TestJobUtil_filepaths {
+public class TestJobInfo_filepaths {
     
     // gpServer variations
     public static final String[] gpUrls = {
@@ -78,6 +78,16 @@ public class TestJobUtil_filepaths {
             gpUrl + "/",
         };
     }
+    
+    // localPath variations, to simulate path to application directory,
+    //   aka 'app.dir' aka 'user.data.dir'
+    public static final String[] appDirPaths = {
+        null,
+        "", // empty string
+        "visualizerLauncher/", // relative path
+        // fq path to windows ('\\' is escape sequence for single '\')
+        "C:\\Users\\test_user\\AppData\\GenePattern\\VisualizerLauncher\\", 
+    };
 
     @Parameters(name="inputFile={2}")
     public static Collection<Object[]> data() {
@@ -89,10 +99,14 @@ public class TestJobUtil_filepaths {
                     final String[] urlPaths = initUrlPaths(user[1], filepath[1]);
                     for(final String link : links) {
                         for(final String urlPath : urlPaths) {
-                            final String inputFile=link + urlPath;
-                            final String expectedUrl = gpUrl + "/" + urlPath;
-                            final String expectedFilepath = filepath[0];
-                            testCases.add(new String[] { gpUrl, user[0], inputFile, expectedUrl, expectedFilepath });
+                            for(final String appDirPath : appDirPaths) {
+                                final String inputFile=link + urlPath;
+                                final String expectedUrl = gpUrl + "/" + urlPath;
+                                final String expectedFilepath = filepath[0];
+                                testCases.add(new String[] { 
+                                    gpUrl, user[0], inputFile, appDirPath, expectedUrl, expectedFilepath 
+                                });
+                            }
                         }
                     }
                 }
@@ -111,9 +125,12 @@ public class TestJobUtil_filepaths {
     public String inputFile="";
 
     @Parameter(3)
+    public String appDirPath;
+
+    @Parameter(4)
     public String expectedUrl="";
     
-    @Parameter(4)
+    @Parameter(5)
     public String expectedFilepath="";
 
     private InputFileInfo inputFileInfo;
@@ -130,10 +147,10 @@ public class TestJobUtil_filepaths {
     @Test
     public void initInputFileUrlStr() {
         assertEquals(
-                // expected
-                expectedUrl, 
-                // actual
-                inputFileInfo.getUrl());
+            // expected
+            expectedUrl, 
+            // actual
+            inputFileInfo.getUrl());
     }
 
     @Test
@@ -143,6 +160,32 @@ public class TestJobUtil_filepaths {
             expectedFilepath,
             // actual
             inputFileInfo.getFilename());
+    }
+    
+    @Test
+    public void substituteLocalPath() {
+        final String localPath;
+        if (Util.isNullOrEmpty(appDirPath)) {
+            localPath=inputFileInfo.getFilename();
+        }
+        else {
+            localPath=appDirPath+inputFileInfo.getFilename();
+        }
+        assertEquals("localPath",
+            // expected
+            localPath,
+            // actual
+            inputFileInfo.substituteLocalPath(inputFileInfo.getArg(), localPath));
+        assertEquals("localPath with '-c' arg",
+            // expected
+            "-c"+localPath,
+            // actual
+            inputFileInfo.substituteLocalPath("-c"+inputFileInfo.getArg(), localPath));
+        assertEquals("localPath with '--inputFile=' arg",
+                // expected
+                "--inputFile="+localPath,
+                // actual
+                inputFileInfo.substituteLocalPath("--inputFile="+inputFileInfo.getArg(), localPath));
     }
 
 }
