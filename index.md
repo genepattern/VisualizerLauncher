@@ -24,6 +24,9 @@ Click `Submit` ... the launcher downloads the application and data files from th
 java -jar visualizerLauncher-1.2.7.jar
 ```
 
+### Testing ... testing ... testing
+Testing edit to github pages
+
 ### Support or Contact
 
 Having trouble with the Visualizer Launcher? Check out our [blog](http://software.broadinstitute.org/cancer/software/genepattern/blog/2017/03/16/java-applet-based-visualizers-no-longer-function-in-any-browser) or [contact us](http://software.broadinstitute.org/cancer/software/genepattern/contact)
