@@ -1,6 +1,6 @@
 package org.genepattern.desktop;
 
-import static org.genepattern.desktop.TestAll.GP_URL;
+import static org.genepattern.desktop.GpServerInfo.GP_URL_DEFAULT;
 import static org.genepattern.desktop.TestAll.JOBS_DIR;
 import static org.junit.Assert.assertEquals;
 
@@ -23,14 +23,14 @@ public class TestJobInfo_commandline {
     private GpServerInfo info;
     private JobInfo jobInfo;
     // default inputFile url
-    private String inputFile=GP_URL+"/jobResults/1/all_aml_test.gct";
+    private String inputFile=GP_URL_DEFAULT+"/jobResults/1/all_aml_test.gct";
     // default local file path
     private String localPath=new File(jobdir, "all_aml_test.gct").getPath();
 
     @Before
     public void setUp() {
         info=new GpServerInfo.Builder()
-            .gpServer(GP_URL)
+            .gpServer(GP_URL_DEFAULT)
             .user(user)
             .jobNumber(jobId)
         .build();
@@ -48,7 +48,7 @@ public class TestJobInfo_commandline {
 
     @Test
     public void inputFile_asArg_special_char() {
-        inputFile=GP_URL+"/jobResults/1/all%20aml%20test.gct";
+        inputFile=GP_URL_DEFAULT+"/jobResults/1/all%20aml%20test.gct";
         localPath=new File(jobdir, "all aml test.gct").getPath();
         jobInfo.addInputFile(info, inputFile);
         String[] cmdIn={ "java", inputFile };

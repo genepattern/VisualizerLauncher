@@ -20,7 +20,7 @@ import org.junit.runners.Parameterized.Parameters;
  * Example json response:
 <pre>
  { "inputFiles": [
-     "https://genepattern.broadinstitute.org/gp/jobResults/1/all_aml_test.gct",
+     "https://cloud.genepattern.org/gp/jobResults/1/all_aml_test.gct",
      "<GenePatternURL>gp/jobResults/1/all%20aml%20test.gct",
      "/gp/jobResults/1/all%20aml%20test.gct"
  ]
@@ -39,7 +39,7 @@ public class TestJobInfo_filepaths {
     
     // gpServer variations
     public static final String[] gpUrls = {
-        "https://genepattern.broadinstitute.org/gp", 
+        "https://cloud.genepattern.org/gp", 
         "http://127.0.0.1:8080/gp"
     };
 

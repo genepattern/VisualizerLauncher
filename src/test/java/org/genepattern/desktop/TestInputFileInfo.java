@@ -1,6 +1,6 @@
 package org.genepattern.desktop;
 
-import static org.genepattern.desktop.TestAll.GP_URL;
+import static org.genepattern.desktop.GpServerInfo.GP_URL_DEFAULT;
 import static org.genepattern.desktop.TestAll.JOBS_DIR;
 import static org.genepattern.desktop.TestAll.TEST_JOB_ID;
 import static org.junit.Assert.assertEquals;
@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 import org.junit.Test;
 
 public class TestInputFileInfo {
-    final String inputFile=GP_URL+"/jobResults/"+TEST_JOB_ID+"/all_aml_test.gct";
+    final String inputFile=GP_URL_DEFAULT+"/jobResults/"+TEST_JOB_ID+"/all_aml_test.gct";
     final File jobDir=new File(JOBS_DIR, TEST_JOB_ID).getAbsoluteFile();
     final InputFileInfo inputFileInfo=new InputFileInfo(TestAll.gpServerInfo, inputFile);
 

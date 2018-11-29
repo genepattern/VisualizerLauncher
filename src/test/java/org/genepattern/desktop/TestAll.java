@@ -1,5 +1,6 @@
 package org.genepattern.desktop;
 
+import static org.genepattern.desktop.GpServerInfo.GP_URL_DEFAULT;
 import static org.junit.Assert.*;
 
 import java.io.File;
@@ -21,7 +22,6 @@ import org.junit.Test;
 public class TestAll {
     private static final Logger log = LogManager.getLogger(TestAll.class);
     
-    public static final String GP_URL="https://genepattern.broadinstitute.org/gp";
     public static final String TEST_USER="test_user";
     public static final String TEST_JOB_ID="1";
 
@@ -33,7 +33,7 @@ public class TestAll {
 
     public static GpServerInfo initGpServerInfo() {
         return new GpServerInfo.Builder()
-                .gpServer(GP_URL)
+                .gpServer(GP_URL_DEFAULT)
                 .user(TEST_USER)
                 .jobNumber(TEST_JOB_ID)
             .build();
@@ -78,7 +78,7 @@ public class TestAll {
         final String basicAuthHeader=Util.initBasicAuthHeader(username, password);
         String actual="";
         try {
-            actual=JobInfo.retrieveJobDetails(basicAuthHeader, GP_URL, jobId);
+            actual=JobInfo.retrieveJobDetails(basicAuthHeader, GP_URL_DEFAULT, jobId);
         }
         catch (Exception e) {
             fail(""+e.getMessage());

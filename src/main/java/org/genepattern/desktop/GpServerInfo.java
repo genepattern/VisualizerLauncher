@@ -7,7 +7,7 @@ import java.io.File;
  * for a single run of the visualizer launcher.
  */
 public class GpServerInfo {
-    public static final String GP_URL_DEFAULT = "https://genepattern.broadinstitute.org/gp";
+    public static final String GP_URL_DEFAULT = "https://cloud.genepattern.org/gp";
 
     protected static boolean isNullOrEmpty(final File file) {
         if (file==null) {

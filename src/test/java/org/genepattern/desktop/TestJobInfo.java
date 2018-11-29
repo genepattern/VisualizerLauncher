@@ -3,14 +3,12 @@ package org.genepattern.desktop;
 import static org.genepattern.desktop.TestAll.TEST_JOB_ID;
 import static org.genepattern.desktop.TestAll.TEST_USER;
 import static org.genepattern.desktop.TestAll.gpServerInfo;
-import static org.genepattern.desktop.TestAll.GP_URL;
+import static org.genepattern.desktop.GpServerInfo.GP_URL_DEFAULT;
 import static org.genepattern.desktop.TestAll.JOBS_DIR;
 import static org.genepattern.desktop.TestAll.TEST_DIR;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -25,7 +23,7 @@ public class TestJobInfo {
 
     protected GpServerInfo.Builder builderForTest() {
         return new GpServerInfo.Builder()
-            .gpServer(GP_URL)
+            .gpServer(GP_URL_DEFAULT)
             .user(TEST_USER)
             .jobNumber(TEST_JOB_ID);
     }
