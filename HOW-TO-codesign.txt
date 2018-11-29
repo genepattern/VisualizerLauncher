@@ -28,7 +28,7 @@ For example for the 1.2.7 release ...
     cd ~/visualizer-launcher
     mkdir dist
     /sysman/scratch/teixeira/macsign/macsign.sh \
-        -h xcode \
+        -h xcodesigner \
         -a `pwd`/VisualizerLauncher.app.zip \
         -d `pwd`/dist \
         -i /home/unix/genepatt/.ssh/id_rsa_genepatt \
