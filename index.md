@@ -12,7 +12,7 @@ Run the visualizer of interest in GenePattern, as you normally would. Once the J
 
 After opening the app (either by double clicking or opening - see above for OS specific instructions), the VisualizerLauncher opens in a new application window.
 You will then need to enter the following information...
-* server, e.g. `https://genepattern.broadinstitute.org/gp` (this can be copied from the URL bar in your browser)
+* server, e.g. `https://cloud.genepattern.org/gp` (this can be copied from the URL bar in your browser)
 * _your genepattern username_
 * _your genepattern password_
 * _the job number of your visualizer job_
