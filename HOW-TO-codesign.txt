@@ -24,14 +24,23 @@ For example for the 1.2.7 release ...
     scp VisualizerLauncher.app.zip <user>@<host>:~/visualizer-launcher
 
 3) sign the code
-    ssh <user>@<host>
-    cd ~/visualizer-launcher
-    mkdir dist
-    /sysman/scratch/teixeira/macsign/macsign.sh \
-        -h xcode \
-        -a `pwd`/VisualizerLauncher.app.zip \
-        -d `pwd`/dist \
-        -i /home/unix/genepatt/.ssh/id_rsa_genepatt \
-        -u igvrole
+    This is now a manual process and requires a Mac.  Prequisite steps (one-time only):
+    a) Obtain the signing certificate and private key password from BITS
+    b) Install this to your Mac keychain (see private email for instructions)
+    
+    Signing steps (every release).  
+    a) Download VisualizerLauncher.app.zip to your local Mac from the CI server
+    b) Open a Terminal on your Mac, then:
+       cd ~/Downloads
+       mkdir sign
+       cp VisualizerLauncher.app.zip sign
+       cd sign
+       unzip VisualizerLauncher.app.zip
+       chmod u+x VisualizerLauncher.app/Contents/MacOS/JavaAppLauncher  # ... only if necessary
+       codesign --deep --force --sign "Developer ID Application: THE BROAD INSTITUTE INC" VisualizerLauncher.app
+       # At this point, MacOS will prompt for userid + password for Keychain Access, after which it will sign the app.
+       # ... after that:
+       rm VisualizerLauncher.app.zip
+       zip -r VisualizerLauncher.app.zip VisualizerLauncher.app.zip
 
 4) upload this to GitHub release
