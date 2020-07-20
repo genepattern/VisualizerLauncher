@@ -27,3 +27,5 @@ java -jar visualizerLauncher-1.2.8.jar
 ### Support or Contact
 
 Having trouble with the Visualizer Launcher? Check out our [blog](http://software.broadinstitute.org/cancer/software/genepattern/blog/2017/03/16/java-applet-based-visualizers-no-longer-function-in-any-browser) or [contact us](http://software.broadinstitute.org/cancer/software/genepattern/contact)
+
+Mac users - If you have trouble running the MacOS app (JRELoadError") try launching the .jar file from the command line. As always, feel free to [contact us](http://software.broadinstitute.org/cancer/software/genepattern/contact) with any questions.
