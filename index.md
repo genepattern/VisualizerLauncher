@@ -3,9 +3,8 @@
 Launch a GenePattern visualizer from the desktop. Use this instead of the 'Open Visualizer' link embedded in the web page. This [blog post](https://www.genepattern.org/blog/2017/03/16/java-applet-based-visualizers-no-longer-function-in-any-browser) has more details.
 
 ### To get started ... 
-**\[Mac OS X\]** Download [VisualizerLauncher.app.zip](https://github.com/genepattern/VisualizerLauncher/releases/download/v1.2.8a/VisualizerLauncher.app.zipp), unzip, and open the app.
 
-**\[Other java\]** Download [visualizerLauncher.jar](https://github.com/genepattern/VisualizerLauncher/releases/download/v1.2.8a/visualizerLauncher-1.2.8-full.jar) and double-click the jar file.
+Download [visualizerLauncher.jar](https://github.com/genepattern/VisualizerLauncher/releases/download/v1.2.8b/visualizerLauncher-1.2.8-full.jar) and double-click the jar file.  Alternatively, at a terminal window execute "java -jar visualizerLauncher-1.2.8-full.jar".
 
 ### Launching a visualizer ...
 Run the visualizer of interest in GenePattern, as you normally would. Once the Job Status page displays, and the visualizer fails to launch in your browser, you will now have the _job number_ to provide to the app.
