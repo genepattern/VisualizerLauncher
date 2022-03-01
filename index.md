@@ -4,7 +4,7 @@ Launch a GenePattern visualizer from the desktop. Use this instead of the 'Open 
 
 ### To get started ... 
 
-Download [visualizerLauncher.jar](https://github.com/genepattern/VisualizerLauncher/releases/download/v1.2.8b/visualizerLauncher-1.2.8-full.jar) and double-click the jar file.  Alternatively, at a terminal window execute "java -jar visualizerLauncher-1.2.8-full.jar".
+Download [visualizerLauncher.jar](https://github.com/genepattern/VisualizerLauncher/releases/download/v1.2.8b/visualizerLauncher-1.2.8-full.jar) and double-click the jar file.
 
 ### Launching a visualizer ...
 Run the visualizer of interest in GenePattern, as you normally would. Once the Job Status page displays, and the visualizer fails to launch in your browser, you will now have the _job number_ to provide to the app.
